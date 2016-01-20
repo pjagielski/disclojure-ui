@@ -13,3 +13,4 @@ dev/local.clj
 .idea
 npm-debug.log
 figwheel_server.log
+compiled/

@@ -56,20 +56,26 @@
 
 (def raw-track
   (->>
-    (times 2 s)
-    (with (times 2 s1))
-    (with (times 2 beat-1))))
+    (times 2 beat-1)
+    (with (times 2 b1))
+    (with (times 2 s))
+    ))
 
-(def track
+(defn track [raw-track]
   (->> raw-track
        (wherever :pitch, :pitch temperament/equal)
        (where :time (bpm 120))
        (where :duration (bpm 120))))
 
+(defn play [raw-track]
+  (-> raw-track
+      track
+      live/play))
+
 (comment
   (o/volume 1)
-  (i/bass)
+  (i/bass :freq 100)
   (i/supersaw :freq 440 :duration 0.5)
-  (live/play track)
-  (live/jam (var track))
+  (live/play (track raw-track))
+  ;(live/jam (var (track)))
   (live/stop))

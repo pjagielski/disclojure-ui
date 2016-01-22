@@ -17,7 +17,7 @@
         note-names (re-frame/subscribe [:notes])]
     (fn []
       [:table.track
-       (into ^{:key "tbody"} [:tbody]
+       (into ^{:key (str part "-tbody")} [:tbody]
          (conj
            (for [y (reverse (range from (+ from semitones)))]
              (let [mapping (map-row (get @part y))]
@@ -39,17 +39,18 @@
     (fn []
       [:table.track
        (into ^{:key "beat-tbody"} [:tbody]
-         (for [y ["kick" "snare"]]
-           (let [mapping (map-row (get @beat y))]
+         (for [instr ["kick" "snare"]]
+           (let [mapping (map-row (get @beat instr))]
              (into
-               ^{:key y} [:tr]
+               ^{:key instr} [:tr]
                (cons
-                 [:td.key y]
+                 [:td.key instr]
                  (for [[from to has-note?] mapping]
                    (doall
                      (for [x (range from to)]
-                       ^{:key (str x y)}
-                       [:td {:class (when has-note? "x")}
+                       ^{:key (str x instr)}
+                       [:td {:class (when has-note? "x")
+                             :on-click #(re-frame/dispatch [:edit-beat [instr x has-note?]])}
                         "-"]))))))))])))
 
 (defn control-panel []

@@ -4,7 +4,7 @@
             [plumbing.core :refer [map-vals]]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
-            [ajax.core :refer [GET POST]]
+            [ajax.core :refer [GET POST PUT]]
             [overdaw-fe.db :as db]
             [overdaw-fe.config :as c :refer [res]]))
 
@@ -63,3 +63,19 @@
   :change-name
   (fn [db [_ value]]
     (assoc db :name value)))
+
+(re-frame/register-handler
+  :edit-beat
+  (fn [db [_ [instr idx has-note?]]]
+    (let [path [:track "beat" nil]]
+      (if-let [curr-pattern (->> (get-in db path))]
+        (let [time (* idx res)]
+          (PUT (str c/api-base "/track/beat")
+               {:params {:time time :drum instr :type (if has-note? :remove :add)}
+                :format :json})
+          (->> (if has-note?
+                 (remove #(and (= time (:time %)) (= instr (:drum %))) curr-pattern)
+                 (conj curr-pattern {:time time :duration (- 8 time) :drum instr}))
+               (sort-by :time)
+               (assoc-in db path)))
+        db))))

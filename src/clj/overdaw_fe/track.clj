@@ -12,7 +12,7 @@
 
 (defmethod live/play-note :bass [{hertz :pitch seconds :duration amp :amp}]
   (when hertz
-    (i/bass :freq hertz :dur seconds :volume (or amp 1))))
+    (i/dub :freq hertz :duration seconds :volume (or amp 1))))
 
 (def kit
   {:kick (o/sample "resources/sounds/kick.wav")
@@ -41,24 +41,23 @@
        (where :part (is :supersaw))))
 
 (def b1
-  (->> (phrase [1/2 3/4 3/4 3/4 3/4 1
-                3/4 3/4 3/4 3/4 1/2]
-               [nil 2 5 4 2 0 2 5 4 0 -3])
+  (->> (phrase [3 3 2]
+               [[0 7] 13 4])
        (wherever :pitch, :pitch (scale/from (o/note :C2)))
        (where :part (is :bass))))
 
 (def beat-1
   (->>
     (reduce with
-            [(tap :snare [1 3 5 7] 8)
-             (tap :kick  [0 1 2 3 15/4 4 5 6 7] 8)])
+            [(tap :snare [2 6] 8)
+             (tap :kick  [0 4 7] 8)])
     (all :part :beat)))
 
 (def raw-track
   (->>
-    (times 2 beat-1)
-    (with (times 2 b1))
-    (with (times 2 s))
+    (times 1 beat-1)
+    (with (times 1 b1))
+    ;(with (times 1 s))
     ))
 
 (defn track [raw-track]
@@ -67,10 +66,11 @@
        (where :time (bpm 120))
        (where :duration (bpm 120))))
 
-(defn play [raw-track]
+(defn jam [raw-track]
   (-> raw-track
       track
-      live/play))
+      ref
+      live/jam))
 
 (comment
   (o/volume 1)

@@ -39,7 +39,7 @@
     (fn []
       [:table.track
        (into ^{:key "beat-tbody"} [:tbody]
-         (for [instr ["kick" "snare"]]
+         (for [instr ["kick" "snare" "hat"]]
            (let [mapping (map-row (get @beat instr))]
              (into
                ^{:key instr} [:tr]
@@ -63,7 +63,7 @@
   (fn []
     [:div
      [:div "OverDAW"]
-     [track-panel "supersaw"]
+     [track-panel "bass"]
      [:hr]
      [beat-panel]
      [:hr]

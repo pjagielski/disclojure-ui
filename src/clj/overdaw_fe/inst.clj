@@ -44,3 +44,25 @@
                           (lin-exp cutoff 0.0 1.0 20.0 20000.0)) 0.65)
          env (env-gen (adsr 0.1 0.45 0.20) (line:kr 1 0 duration) :action FREE)]
      (pan2 (* snd env amp))))
+
+(defsynth dub [freq 440 divisor 2.0 depth 2.0 out-bus 0 duration 1 bpm 120 wobble 5/2]
+  (let [modulator (/ freq divisor)
+        mod-env   (env-gen (lin 1 0 6))
+        snd       (lf-tri (+ freq (* mod-env (* freq depth) (sin-osc modulator))))
+        ;snd       (sin-osc freq)
+        trig      (impulse:kr (/ bpm 120))
+        swr       (demand trig 0 (dseq [wobble] INF))
+        sweep     (lin-exp (lf-tri swr) -1 1 40 8000)
+        wob       (lpf snd sweep)
+        wob       (* 0.8 (normalizer wob))
+        wob       (+ wob (bpf wob 3500 2))
+        verb      (* 0.3 (g-verb wob 9 0.7 0.7))
+        env       (env-gen (adsr 0.1 1.4 0.20) (line:kr 1 0 duration) :action FREE)]
+    (out out-bus (pan2 (* env (+ wob (* 0.8 verb)))))))
+
+(comment
+  (stop)
+  (demo 3 (dub 100))
+  (demo 3 (mix (saw [99 100 101])))
+  (demo 3 (wobble (mix (saw [99 100 101])) 3))
+  (demo 5 (wobble (mix (saw [99 100 101])) 0.3)))

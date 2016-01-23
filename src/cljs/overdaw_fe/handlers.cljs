@@ -16,7 +16,7 @@
   :initialize-db
   (fn [_ _]
     (re-frame/dispatch [:sync-track])
-    (re-frame/dispatch [:sync-notes [60 96]])
+    (re-frame/dispatch [:sync-notes [24 96]])
     db/default-db))
 
 (re-frame/register-handler

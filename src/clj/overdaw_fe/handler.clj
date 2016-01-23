@@ -34,7 +34,7 @@
         (swagger-docs "/swagger.json"
                       {:info {:title "AASA api"} :basePath "/api"})
         (GET* "/track" [] (ok @track))
-        (POST* "/play" [] (t/play @track) (ok))
+        (POST* "/play" [] (t/jam @track) (ok))
         (POST* "/stop" [] (live/stop) (ok))
         (GET* "/notes/:from/:to" []
               :path-params [from :- Long, to :- Long]

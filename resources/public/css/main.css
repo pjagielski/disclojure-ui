@@ -1,0 +1,25 @@
+body {
+
+}
+
+table.track {
+    border-spacing: 0;
+}
+
+table.track td {
+    background-color: #eeeeee;
+    width: 30px;
+    height: 25px;
+    font-size: 10px;
+    text-align: center;
+    border: 1px solid #000000;
+}
+
+table.track td.key {
+    width: 50px;
+}
+
+table.track td.x {
+    color: #ffffff;
+    background-color: red;
+}

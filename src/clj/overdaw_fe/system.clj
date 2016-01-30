@@ -1,19 +1,17 @@
 (ns overdaw-fe.system
   (:require [com.stuartsierra.component :as component]
             [palikka.components.http-kit :as http-kit]
-            [overdaw-fe.track :refer [raw-track]]
+            [overdaw-fe.track :refer [track raw-track kit]]
             [overdaw-fe.handler :as handler]))
 
 (defn new-system [config]
   (component/map->SystemMap
     {:track (reify component/Lifecycle
-              (start [_] {:track (ref raw-track)}))
+              (start [_] {:raw-track (ref raw-track)
+                          :track     (ref (track raw-track))
+                          :kit (ref kit)}))
      :http  (component/using
               (http-kit/create
                 (:http config)
-                {:fn
-                 (if (:dev-mode? config)
-                   ; re-create handler on every request
-                   (fn [system] #((handler/create system) %))
-                   handler/create)})
+                {:fn handler/create})
               [:track])}))

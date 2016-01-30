@@ -35,11 +35,12 @@
            (into [:tr] (cons [:td "x"] (for [x (range notes)] [:td x])))))])))
 
 (defn beat-panel []
-  (let [beat (re-frame/subscribe [:beat])]
+  (let [beat (re-frame/subscribe [:beat])
+        kit (re-frame/subscribe [:kit])]
     (fn []
       [:table.track
-       (into ^{:key "beat-tbody"} [:tbody]
-         (for [instr ["kick" "snare" "hat"]]
+       (into ^{:key "beat-tbody "} [:tbody]
+         (for [instr (keys @kit)]
            (let [mapping (map-row (get @beat instr))]
              (into
                ^{:key instr} [:tr]
@@ -63,8 +64,8 @@
   (fn []
     [:div
      [:div "OverDAW"]
-     [track-panel "bass"]
-     [:hr]
+     ;[track-panel "bass"]
+     ;[:hr]
      [beat-panel]
      [:hr]
      [control-panel]]))

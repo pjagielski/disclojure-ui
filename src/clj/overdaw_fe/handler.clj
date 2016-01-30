@@ -13,7 +13,7 @@
 ; -> cljc
 (defn mutate! [current part time drum add?]
   (if add?
-    (conj current {:time time :duration (- 8 time) :drum drum :part part})
+    (conj current {:time time :duration (- 8 time) :drum drum :part part :amp 1})
     (remove #(and (= time (:time %)) (= drum (:drum %))) current)))
 
 (defn all-but-part [by-part part]
@@ -22,7 +22,11 @@
       vals
       flatten))
 
-(p/defnk create [[:track track]]
+(defn reset-track [track-ref raw-track-ref new-track]
+  (ref-set raw-track-ref new-track)
+  (ref-set track-ref (t/track new-track)))
+
+(p/defnk create [[:track track raw-track kit]]
   (routes
     (route/resources "/")
     (GET "/" []
@@ -33,8 +37,8 @@
                     :swagger-docs "/api/swagger.json")
         (swagger-docs "/swagger.json"
                       {:info {:title "AASA api"} :basePath "/api"})
-        (GET* "/track" [] (ok @track))
-        (POST* "/play" [] (t/jam @track) (ok))
+        (GET* "/track" [] (ok @raw-track))
+        (POST* "/play" [] (live/jam track) (ok))
         (POST* "/stop" [] (live/stop) (ok))
         (GET* "/notes/:from/:to" []
               :path-params [from :- Long, to :- Long]
@@ -42,14 +46,17 @@
                    (map (fn [x] {x (o/find-note-name x)}))
                    (into {})
                    ok))
+        (GET* "/kit" []
+              (ok (->> @kit
+                       (p/map-vals #(select-keys % [:amp])))))
         (PUT* "/track/beat" []
               :body [body m/BeatMutation]
               (dosync
-                (let [by-part (group-by :part @track)
+                (let [by-part (group-by :part @raw-track)
                       {:keys [drum time]} body
                       curr-beat (get by-part :beat)]
                   (->> (all-but-part by-part :beat)
                        (concat (mutate! curr-beat :beat time (keyword drum) (m/add? body)))
                        (sort-by :time)
-                       (ref-set track))
+                       (reset-track track raw-track))
                   (ok))))))))

@@ -16,6 +16,7 @@
   :initialize-db
   (fn [_ _]
     (re-frame/dispatch [:sync-track])
+    (re-frame/dispatch [:sync-kit])
     (re-frame/dispatch [:sync-notes [24 96]])
     db/default-db))
 
@@ -46,6 +47,19 @@
   :sync-notes-response
   (fn [db [_ notes]]
     (assoc db :notes notes)))
+
+(re-frame/register-handler
+  :sync-kit
+  (fn [db _]
+    (GET (str c/api-base "/kit")
+         {:response-format :json :keywords? false
+          :handler #(re-frame/dispatch [:sync-kit-response (js->clj %1)])})
+    db))
+
+(re-frame/register-handler
+  :sync-kit-response
+  (fn [db [_ kit]]
+    (assoc db :kit (into (sorted-map) kit))))
 
 (re-frame/register-handler
   :play

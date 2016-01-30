@@ -26,3 +26,7 @@
 (re-frame/register-sub
   :notes
   (fn [db] (reaction (:notes @db))))
+
+(re-frame/register-sub
+  :kit
+  (fn [db] (reaction (:kit @db))))

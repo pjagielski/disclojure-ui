@@ -11,10 +11,15 @@
             [leipzig.live :as live]))
 
 ; -> cljc
-(defn mutate! [current part time drum add?]
+(defn mutate-beat! [current {:keys [time duration amp]} drum add?]
   (if add?
-    (conj current {:time time :duration (- 8 time) :drum drum :part part :amp 1})
-    (remove #(and (= time (:time %)) (= drum (:drum %))) current)))
+    (conj current {:time time :duration duration :drum drum :part :beat :amp amp})
+    (remove #(and (= (double time) (double (:time %))) (= drum (:drum %))) current)))
+
+(defn mutate-track! [current {:keys [time duration amp pitch]} part add?]
+  (if add?
+    (conj current {:time time :duration duration :pitch pitch :part part :amp amp})
+    (remove #(and (= (double time) (double (:time %))) (= pitch (:pitch %))) current)))
 
 (defn all-but-part [by-part part]
   (-> by-part
@@ -49,14 +54,24 @@
         (GET* "/kit" []
               (ok (->> @kit
                        (p/map-vals #(select-keys % [:amp])))))
-        (PUT* "/track/beat" []
+        (PUT* "/track" []
+              :body [body m/TrackMutation]
+              (dosync
+                (let [by-part (group-by :part @raw-track)
+                      part (keyword (:part body))
+                      curr-track (get by-part part)]
+                  (->> (all-but-part by-part part)
+                       (concat (mutate-track! curr-track body part (m/add? body)))
+                       (sort-by :time)
+                       (reset-track track raw-track))
+                  (ok))))
+        (PUT* "/beat" []
               :body [body m/BeatMutation]
               (dosync
                 (let [by-part (group-by :part @raw-track)
-                      {:keys [drum time]} body
                       curr-beat (get by-part :beat)]
                   (->> (all-but-part by-part :beat)
-                       (concat (mutate! curr-beat :beat time (keyword drum) (m/add? body)))
+                       (concat (mutate-beat! curr-beat body (keyword (:drum body)) (m/add? body)))
                        (sort-by :time)
                        (reset-track track raw-track))
                   (ok))))))))

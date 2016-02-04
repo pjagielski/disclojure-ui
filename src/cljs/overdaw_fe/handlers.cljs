@@ -80,16 +80,30 @@
 
 (re-frame/register-handler
   :edit-beat
-  (fn [db [_ [instr idx has-note?]]]
-    (let [path [:track "beat" nil]]
-      (if-let [curr-pattern (->> (get-in db path))]
-        (let [time (* idx res)]
-          (PUT (str c/api-base "/track/beat")
-               {:params {:time time :drum instr :type (if has-note? :remove :add)}
-                :format :json})
-          (->> (if has-note?
-                 (remove #(and (= time (:time %)) (= instr (:drum %))) curr-pattern)
-                 (conj curr-pattern {:time time :duration (- 8 time) :drum instr}))
-               (sort-by :time)
-               (assoc-in db path)))
-        db))))
+  (fn [db [_ [instr t-idx has-note?]]]
+    (let [path [:track "beat" nil] curr-pattern (get-in db path [])
+          time (* t-idx res) const (:beat-const db)
+          new-entry (merge const {:time time :duration (- 8 time) :drum instr})]
+      (PUT (str c/api-base "/beat")
+           {:params (merge new-entry {:type (if has-note? :remove :add)})
+            :format :json})
+      (->> (if has-note?
+             (remove #(and (= time (:time %)) (= instr (:drum %))) curr-pattern)
+             (conj curr-pattern new-entry))
+           (sort-by :time)
+           (assoc-in db path)))))
+
+(re-frame/register-handler
+  :edit-track
+  (fn [db [_ [instr t-idx note has-note?]]]
+    (let [path [:track instr note] curr-pattern (get-in db path [])
+          time (* t-idx res) const (:track-const db)
+          new-entry (merge const {:time time :pitch note :part instr})]
+      (PUT (str c/api-base "/track")
+           {:params (merge new-entry {:type (if has-note? :remove :add)})
+            :format :json})
+      (->> (if has-note?
+             (remove #(and (= time (:time %)) (= note (:pitch %))) curr-pattern)
+             (conj curr-pattern new-entry))
+           (sort-by :time)
+           (assoc-in db path)))))

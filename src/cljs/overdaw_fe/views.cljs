@@ -1,44 +1,61 @@
 (ns overdaw-fe.views
-    (:require [re-frame.core :as re-frame]
+  (:require-macros [reagent.ratom :refer [reaction]])
+  (:require [re-frame.core :as re-frame]
               [clojure.set :refer [union]]
+              [clojure.string :as s]
               [overdaw-fe.config :refer [res notes from semitones]]))
 
-(defn map-note [[idx result] {:keys [time duration]}]
+(defn map-note [[idx result] {:keys [time duration amp]}]
   (let [time-idx (/ time res)
         new-idx (+ time-idx (/ duration res))]
-    [new-idx (conj result [idx time-idx false] [time-idx new-idx true])]))
+    [new-idx (conj result [idx time-idx false amp] [time-idx new-idx true amp])]))
 
 (defn map-row [times]
   (let [[end reduced] (reduce map-note [0 []] times)]
     (conj reduced [end notes false])))
 
-(defn track-panel [part]
-  (let [part (re-frame/subscribe [:track-part part])
+(defn amp->class [amp]
+  (condp > amp
+    0.0 "a0"
+    0.3 "a3"
+    0.5 "a5"
+    "a7"))
+
+(defn time-panel []
+  (fn []
+    [:table.seq
+     [:thead
+      (into [:tr] (cons [:th {:class "key"} "x"]
+                        (for [x (range notes)] [:th x])))]]))
+
+(defn track-panel [instr]
+  (let [part (re-frame/subscribe [:track-part instr])
         note-names (re-frame/subscribe [:notes])]
     (fn []
-      [:table.track
-       (into ^{:key (str part "-tbody")} [:tbody]
+      [:table.seq
+       (into ^{:key (str instr "-tbody")} [:tbody]
          (conj
            (for [y (reverse (range from (+ from semitones)))]
-             (let [mapping (map-row (get @part y))]
+             (let [mapping (map-row (get @part y))
+                   note (get @note-names (str y))]
                (into
                  ^{:key y} [:tr]
                  (cons
-                   [:td.key (str y "/" (get @note-names (str y)))]
-                   (for [[from to has-note?] mapping]
+                   [:td.key (str y "/" note)]
+                   (for [[from to has-note? amp] mapping]
                      (doall
-                       (for [x (range from to)]
-                         ^{:key (str x y)}
-                         [:td {:class (when has-note? "x")}
-                          (if has-note?
-                            (when (= x from) (get @note-names (str y))) "-")])))))))
-           (into [:tr] (cons [:td "x"] (for [x (range notes)] [:td x])))))])))
+                       (for [t (range from to)]
+                         ^{:key (str t y)}
+                         [:td {:class (s/join " " [(when has-note? "x") (amp->class amp)])
+                               :on-click #(re-frame/dispatch [:edit-track [instr t y has-note?]])}
+                          (if has-note? (when (= t from) note) "-")])))))
+               ))))])))
 
 (defn beat-panel []
   (let [beat (re-frame/subscribe [:beat])
         kit (re-frame/subscribe [:kit])]
     (fn []
-      [:table.track
+      [:table.seq
        (into ^{:key "beat-tbody "} [:tbody]
          (for [instr (keys @kit)]
            (let [mapping (map-row (get @beat instr))]
@@ -46,12 +63,12 @@
                ^{:key instr} [:tr]
                (cons
                  [:td.key instr]
-                 (for [[from to has-note?] mapping]
+                 (for [[from to has-note? amp] mapping]
                    (doall
-                     (for [x (range from to)]
-                       ^{:key (str x instr)}
-                       [:td {:class (when has-note? "x")
-                             :on-click #(re-frame/dispatch [:edit-beat [instr x has-note?]])}
+                     (for [t (range from to)]
+                       ^{:key (str t instr)}
+                       [:td {:class    (s/join " " [(when has-note? "x") (amp->class amp)])
+                             :on-click #(re-frame/dispatch [:edit-beat [instr t has-note?]])}
                         "-"]))))))))])))
 
 (defn control-panel []
@@ -63,9 +80,13 @@
 (defn main-panel []
   (fn []
     [:div
-     [:div "OverDAW"]
-     ;[track-panel "bass"]
-     ;[:hr]
-     [beat-panel]
+     [:h2 "OverDAW"]
+     [:hr]
+     [:div.seq-container
+      [time-panel]
+      [:hr]
+      [track-panel "wide-bass"]
+      [:hr]
+      [beat-panel]]
      [:hr]
      [control-panel]]))

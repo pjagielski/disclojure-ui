@@ -27,7 +27,7 @@
                                     "test/js"
                                     "resources/public/css/compiled"]
 
-
+  :main overdaw-fe.main
 
   :garden {:builds [{:id "screen"
                      :source-paths ["src/clj"]
@@ -44,7 +44,8 @@
 
    :repl {:source-paths ["dev" "src/clj"]
           :resource-paths ^:replace ["resources" "target/figwheel"]
-          :prep-tasks     ^:replace [["javac"] ["compile"]]}}
+          :prep-tasks     ^:replace [["javac"] ["compile"]]}
+   :uberjar {:aot :all}}
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/cljs"]

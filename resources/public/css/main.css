@@ -2,24 +2,43 @@ body {
 
 }
 
-table.track {
+table.seq {
     border-spacing: 0;
+    width: 2016px;
 }
 
-table.track td {
+table.seq th, td {
     background-color: #eeeeee;
-    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
     height: 25px;
     font-size: 10px;
     text-align: center;
     border: 1px solid #000000;
 }
 
-table.track td.key {
-    width: 50px;
+table.seq .key {
+    max-width: 50px;
+    min-width: 50px;
 }
 
-table.track td.x {
+table.seq td.x {
     color: #ffffff;
-    background-color: red;
+}
+
+table.seq td.x.a7 {
+    background-color: #EA1308;
+}
+
+table.seq td.x.a5 {
+    background-color: #FF635B;
+}
+
+table.seq td.x.a3 {
+    background-color: #FF8B85;
+}
+
+.seq-container {
+    width: 1485px;
+    overflow-x: scroll;
 }

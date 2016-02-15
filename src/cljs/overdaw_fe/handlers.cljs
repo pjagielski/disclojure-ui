@@ -74,15 +74,16 @@
     db))
 
 (re-frame/register-handler
-  :change-name
-  (fn [db [_ value]]
-    (assoc db :name value)))
+  :change-track-control
+  (fn [db [_ [name value]]]
+    (println "change track control" (type value))
+    (assoc-in db [:track-controls name] value)))
 
 (re-frame/register-handler
   :edit-beat
   (fn [db [_ [instr t-idx has-note?]]]
     (let [path [:track "beat" nil] curr-pattern (get-in db path [])
-          time (* t-idx res) const (:beat-const db)
+          time (* t-idx res) const (:beat-controls db)
           new-entry (merge const {:time time :duration (- 8 time) :drum instr})]
       (PUT (str c/api-base "/beat")
            {:params (merge new-entry {:type (if has-note? :remove :add)})
@@ -97,8 +98,9 @@
   :edit-track
   (fn [db [_ [instr t-idx note has-note?]]]
     (let [path [:track instr note] curr-pattern (get-in db path [])
-          time (* t-idx res) const (:track-const db)
-          new-entry (merge const {:time time :pitch note :part instr})]
+          time (* t-idx res) const (:track-controls db)
+          new-entry (merge (select-keys const [:duration :amp])
+                           {:time time :pitch note :part instr})]
       (PUT (str c/api-base "/track")
            {:params (merge new-entry {:type (if has-note? :remove :add)})
             :format :json})

@@ -9,7 +9,6 @@
 (def api-base
   "http://localhost:3000/api")
 
-(def from 36)
 (def semitones 18)
-(def notes 64)
+(def ticks (* 8 8))
 (def res 0.25)

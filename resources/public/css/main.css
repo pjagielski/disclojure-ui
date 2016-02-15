@@ -1,5 +1,9 @@
 body {
+}
 
+.main {
+    padding: 10px;
+    margin: 10px;
 }
 
 table.seq {
@@ -38,7 +42,18 @@ table.seq td.x.a3 {
     background-color: #FF8B85;
 }
 
+table.seq td.t {
+    border-left: 2px solid #000000;
+}
+
 .seq-container {
-    width: 1485px;
     overflow-x: scroll;
+}
+
+.track-controls {
+    /*width: 200px;*/
+}
+
+.play-controls {
+    margin-top: 20px;
 }

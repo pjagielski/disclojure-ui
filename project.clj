@@ -39,7 +39,10 @@
   {:dev {:plugins [[lein-figwheel "0.5.0-2"]
                    [lein-doo "0.1.6"]]
          :dependencies [[reloaded.repl "0.2.1"]
-                        [figwheel "0.5.0-2"]]
+                        [figwheel "0.5.0-2"]
+                        [binaryage/devtools "0.5.2"]
+                        [org.clojars.stumitchell/clairvoyant "0.1.0-SNAPSHOT"]
+                        [day8/re-frame-tracer "0.1.0-SNAPSHOT"]]
          :figwheel {:css-dirs ["resources/public/css"]}}
 
    :repl {:source-paths ["dev" "src/clj"]

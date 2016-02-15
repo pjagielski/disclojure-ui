@@ -30,3 +30,7 @@
 (re-frame/register-sub
   :kit
   (fn [db] (reaction (:kit @db))))
+
+(re-frame/register-sub
+  :track-controls
+  (fn [db] (reaction (:track-controls @db))))

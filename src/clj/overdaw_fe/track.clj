@@ -45,7 +45,7 @@
   (->> (phrase [3/4 1/4 1/2 1/4 1/2 1/4 1/2 3/4 1/4 1/2 1/4 3/4 1/4 1/4 1/4 1/2 1/4 1/2 1/4 1/4]
                [-2 nil -2 nil -2 nil -2 -2 nil -1 nil -1 0 -3 nil -3 -3 -3 -4 -3])
        (wherever :pitch, :pitch (scale/from (o/note :C3)))
-       (where :part (is :bass))
+       (where :part (is :garage-bass))
        (all :amp 2.0)))
 
 (def b3
@@ -55,10 +55,9 @@
        (where :part (is :indie-bass))
        (all :amp 2.0)))
 
-
 (def b4
   (->> (phrase (repeat 4)
-               [5 7 8 8])
+               [0 0 4 4])
        (wherever :pitch, :pitch (scale/from (o/note :C3)))
        (where :part (is :wide-bass))
        (all :amp 2.0)))
@@ -69,6 +68,47 @@
        (wherever :pitch, :pitch (scale/from (o/note :C2)))
        (where :part (is :wide-bass))
        (all :amp 2.0)))
+
+(def b6
+  (let [theme [3/4 3/4 3/4 1/2 3/4 1/2]]
+    (->> (phrase (concat [3/4 3/4 3/4 1/2 1/4 1/2 1/2]
+                         (flatten (repeat 3 theme)))
+                 (concat [4 4 4 4 16 4 16]
+                         [7 7 7 7 7 7]
+                         [9 9 9 9 9 9]
+                         [11 11 12 12 12 12]))
+         (wherever :pitch, :pitch (scale/from (o/note :C2)))
+         (where :part (is :bass))
+         (all :amp 2.0))))
+
+(def pretend-bass
+  (->> (phrase (repeat 1/2)
+               (concat
+                 (repeat 7 [[9 2 -10]])
+                 [[9 -3]]
+                 (repeat 6 [[2 -5 -17]])
+                 [[2 -10]]
+                 [[9 -3]]))
+       (wherever :pitch, :pitch (scale/from (o/note :C4)))
+       (where :part (is :indie-bass))))
+
+(def face-bass
+  (let [theme (concat (repeat 5 3/4) [1/4])]
+    (->> (phrase (flatten (repeat theme))
+                 (concat (repeat 6 -4)
+                         (repeat 6 -6)
+                         (repeat 6 -8)))
+         (then (phrase (concat (repeat 4 3/4) [1])
+                       [-11 -11 -11 -6 -6]))
+         (wherever :pitch, :pitch (scale/from (o/note :C3)))
+         (where :part (is :bass)))))
+
+(def face-glide
+  (->> (phrase [3 1 4 3 1 2 1 1]
+               [-4 -4 -6 -8 -8 -11 -6 -6])
+       (wherever :pitch, :pitch (scale/from (o/note :C3)))
+       (where :amp (is 1))
+       (where :part (is :bass))))
 
 (def beat-1
   (->>
@@ -106,23 +146,28 @@
       [(tap (keyword "808 Kick") [0] 8)
        (tap :kick [0 11/4 14/4 6 27/4 30/4] 8)
        (tap :snare [1 3 5 7] 8)
-       (tap :hat (range 1/2 8) 8)
+       ;(tap :hat (range 1/2 8) 8)
        ;(tap :shaker [1/4 6/4 7/4 9/4 17/4 18/4 22/4 25/4 26/4 27/4] 8 :amp 0.3)
-       ;(tap :tambourine (range 0 8 1/2) 8 :amp 1)
-       ;(tap :tambourine (range 1/4 8 1/2) 8 :amp 0.4)
+       (tap :tambourine (range 0 8 1/2) 8 :amp 1)
+       (tap :tambourine (range 1/4 8 1/2) 8 :amp 0.4)
        ;(tap :technologic [0] 8)
        ])
     (all :part :beat)))
 
 (def raw-track
   (->>
-    ;(times 1 house-beat-1)
+    ;(times 2 house-beat-1)
     (times 2 garage-beat-1)
     ;(times 1 beat-0)
-    ;(with (times 1 b2))
-    (with (times 1 b4))
-    ;(with (times 1 b5))
-    ;(with (times 2 s))
+    ;(with (times 2 b2))
+    ;(with (times 1 b3))
+    ;(with (times 1 b4))
+    (with (times 1 b5))
+    ;(with (times 1 b6))
+    ;(with (times 1 face-bass))
+    ;(with (times 1 face-glide))
+    ;(with (times 2 pretend-bass))
+    ;(with (times 1 s))
     ;(with (times 2 s1))
     ))
 
@@ -134,13 +179,7 @@
 
 (comment
   (o/volume 1)
-  (i/d-bass :freq 220 :dur 0.5)
-  (i/g-bass :freq 100 :dur 1 :volume 2)
-  (i/wide-bass :freq 100 :dur 1 :volume 2)
-  (i/dub :freq 200 :bpm 120 :wobble 2)
-  (i/talking-bass :freq 130 :amp 3 :dur 3)
   (apply (-> :hat kit :sound) [:amp 0.5])
   (apply (-> :kick kit :sound) [:amp 0.5])
-  (i/supersaw :freq 440 :duration 0.5)
   (live/play (track raw-track))
   (live/stop))

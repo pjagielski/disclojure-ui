@@ -8,12 +8,7 @@
 
 (defmethod live/play-note :bass [{hertz :pitch seconds :duration amp :amp}]
   (when hertz
-    ;(i/dub :freq hertz :duration seconds :volume (or amp 1))
-    (i/g-bass :freq hertz :dur seconds :volume (or amp 1))
-    ;(i/d-bass :freq hertz :dur seconds :volume (or amp 1))
-    ;(i/dark-bass :freq hertz :dur seconds :volume (or amp 1))
-    ;(i/talking-bass :freq hertz :dur seconds :amp (or amp 1))
-    ))
+    (i/bass :freq hertz :dur seconds :volume (or amp 1))))
 
 (defmethod live/play-note :indie-bass [{hertz :pitch seconds :duration amp :amp}]
   (when hertz
@@ -23,3 +18,10 @@
   (when hertz
     (i/wide-bass :freq hertz :dur seconds :amp (or amp 1))))
 
+(defmethod live/play-note :garage-bass [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (i/g-bass :freq hertz :dur seconds :amp (or amp 1))))
+
+(defmethod live/play-note :pad [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (i/pad :freq hertz :dur seconds :amp (or amp 1))))

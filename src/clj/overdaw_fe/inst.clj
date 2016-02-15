@@ -22,6 +22,16 @@
                   cut-out))
          (:default :ar))
 
+(defcgen echo [input  {:default :none}
+                max-delay {:default 1.0}]
+         (:ar (+ input (comb-n input max-delay 0.4 2.0)))
+         (:default :ar))
+
+(defsynth fx-echo-amp [bus 0 max-delay 1.0 delay-time 0.4 decay-time 2.0 amp 0.5]
+          (let [source (in bus)
+                echo (comb-n source max-delay delay-time decay-time)]
+            (replace-out bus (pan2 (+ (* amp echo) source) 0))))
+
 (definst talking-bass [freq 130 mod1-partial 2.34 mod1-index 3 mod2-partial 12 mod2-index 30
                        car-partial 0.15 amp 1 dur 1.0]
  (let [mod2 (-> (sin-osc (* freq mod2-partial))
@@ -92,9 +102,9 @@
        (* volume)
        pan2)))
 
-(definst indie-bass [freq 440 dur 1.0 amp 1.0 pan 0 wet 0.5 room 0.5 cutoff 5000]
+(definst indie-bass [freq 440 dur 1.0 amp 1.0 pan 0 wet 0.2 room 0.9 cutoff 5000 fil-dur 0.5]
    (let [envelope (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))
-         level (+ 100 (env-gen (perc 0 1.5) :level-scale cutoff))
+         level (+ 1000 (env-gen (perc 0 fil-dur) :level-scale cutoff))
          osc (mix [(saw freq)
                    (saw (* freq 1.009))
                    (pulse (/ freq 2) 0.5)])]
@@ -103,21 +113,62 @@
          (* envelope)
          (effects :pan pan :wet wet :room room :volume amp))))
 
-(definst wide-bass [freq 220 dur 1.0 cutoff 4500 sub-amp 0.4 amp 0.9]
+(definst wide-bass [freq 220 dur 1.0 cutoff 2500 sub-amp 0.4 amp 0.9]
    (let [osc1 (saw freq)
          osc2 (saw (* freq 0.99))
          sub  (* sub-amp (pulse (/ freq 2)))
          snd  (mix [osc1 osc2 sub])
-         snd  (rlpf snd (+ 100 (env-gen (perc 0 1.5) :level-scale cutoff)) 0.65)
+         snd  (lpf snd (+ 100 (env-gen (perc 0 1.5) :level-scale cutoff)))
          env  (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))]
       (pan2 (* snd env amp))))
 
+(definst bass [freq 220 dur 1.0 amp 0.5 osc-mix 0.2 cutoff 2500 fil-amt 100]
+   (let [sub-freq (/ freq 2)
+         osc1 (saw:ar freq)
+         osc2 (pulse sub-freq 0.5)
+         osc (+ (* osc-mix osc2) (* (- 1 osc-mix) osc1))
+         snd [osc osc]
+         level (+ fil-amt (env-gen (perc 0 dur) :level-scale cutoff))
+         snd (rlpf snd level 0.6)
+         env (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))]
+     (out 0 (* amp env snd))))
+
+(definst bend-noise [amp 0.7 decay 0.85 cutoff 0.65]
+   (let [osc (white-noise)
+         snd [osc osc]
+         snd (bpf snd (lin-exp cutoff 0.0 1.0 20.0 20000.0) 0.5)
+         env (env-gen (env-adsr 0.0 decay 0.0 0.7) :action FREE)]
+     (out 0 (* amp env snd))))
+
+(definst pad [freq 220 dur 1.0 amp 0.5 pan 0 cutoff 2500 fil-amt 100]
+   (let [env (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))
+         fil-env (+ fil-amt (env-gen (perc 0 dur) :level-scale cutoff))
+         osc (sin-osc freq)]
+     (-> osc
+         (lpf fil-env)
+         (* env amp)
+         (echo)
+         pan2)))
+
+(definst strings [freq 220 sustain 1.7 release 0.4 amp 1 cutoff 0.1 contour 0.3]
+   (let [freqs [freq (* 0.99 freq) (* 1.10 freq)]
+         src   (saw freqs)
+         fil-env (env-gen (adsr 0.1 0.9 0.1 0.6))
+         snd   (bpf src (+ (* fil-env (* contour 10000))
+                           (lin-exp cutoff 0.0 1.0 20.0 20000.0)))
+         env   (env-gen (env-lin 0.01 sustain release) 1 1 0 1 FREE)]
+     (out 0 (pan2 (* amp env snd)))))
+
 (comment
   (stop)
+  (bend-noise)
+  (pad)
+  (strings)
+  (bass :freq 220)
   (wide-bass :freq 220)
   (indie-bass :freq 220)
   (supersaw :cutoff 5000 :env-amount 0.9)
-  (g-bass :freq 440 :cutoff 5000 :env-amount 0.1)
+  (g-bass :freq 220 :cutoff 5000 :env-amount 0.1)
   (d-bass)
   (dark-bass 440)
   (dub 100))

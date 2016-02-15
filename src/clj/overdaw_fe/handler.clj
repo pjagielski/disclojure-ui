@@ -41,7 +41,7 @@
         (swagger-ui "/swagger"
                     :swagger-docs "/api/swagger.json")
         (swagger-docs "/swagger.json"
-                      {:info {:title "AASA api"} :basePath "/api"})
+                      {:info {:title "OverDAW api"} :basePath "/api"})
         (GET* "/track" [] (ok @raw-track))
         (POST* "/play" [] (live/jam track) (ok))
         (POST* "/stop" [] (live/stop) (ok))

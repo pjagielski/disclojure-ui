@@ -54,6 +54,14 @@ table.seq td.t {
     overflow-x: scroll;
 }
 
+.seq-container hr {
+    border: none;
+}
+
+.track-control {
+    width: 80px !important;
+}
+
 .play-controls {
     margin-top: 20px;
 }

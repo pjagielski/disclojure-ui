@@ -86,7 +86,7 @@
                              :on-click #(re-frame/dispatch [:edit-beat [instr t has-note?]])}
                         "-"]))))))))])))
 
-(defn update-control [key pred f t controls]
+(defn step-control [key pred f t controls]
   (fn []
     (let [val (get @controls key)]
       [:button.btn
@@ -96,26 +96,25 @@
 
 (defn track-control [key values controls]
   (fn []
-    (into [:select.form-control
+    (into [:select.form-control.track-control
            {:name      (str key) :value (get @controls key)
             :on-change (fn [e] (re-frame/dispatch [:change-track-control
                                                    [key (js/Number (.. e -target -value))]]))}]
           (map (fn [x] [:option {:value x} x]) values))))
 
+(defn update-control-panel [key start end step controls]
+  [:div.row
+   [:div.col-md-12
+    [step-control key #(> % start) #(- % step) "v" controls]
+    [track-control key (range start end step) controls]
+    [step-control key #(< % end) #(+ % step) "^" controls]]])
+
 (defn track-control-panel []
   (let [controls (re-frame/subscribe [:track-controls])]
     (fn []
       [:div.track-controls.form-inline
-       [:div.row
-        [:div.col-md-12
-         [update-control :from #(> % 24) dec "v" controls]
-         [track-control :from (range 24 72) controls]
-         [update-control :from #(< % 72) inc "^" controls]]]
-       [:div.row
-        [:div.col-md-12
-         [update-control :duration #(> % 0.25) #(- % 0.25) "v" controls]
-         [track-control :duration (range 0.25 4 0.25) controls]
-         [update-control :duration #(< % 4) #(+ % 0.25) "^" controls]]]])))
+       [update-control-panel :from 24 72 1 controls]
+       [update-control-panel :duration 0.25 4 0.25 controls]])))
 
 (defn control-button [name event]
   [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])
@@ -139,7 +138,8 @@
         [:hr]
         [track-panel "wide-bass"]
         [:hr]
-        [beat-panel]]]
+        [beat-panel]
+        [:hr]]]
       [:div.col-md-2
        [track-control-panel]]]
      [:div.row.play-controls

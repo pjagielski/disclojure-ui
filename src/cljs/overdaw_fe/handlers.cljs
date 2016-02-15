@@ -76,7 +76,6 @@
 (re-frame/register-handler
   :change-track-control
   (fn [db [_ [name value]]]
-    (println "change track control" (type value))
     (assoc-in db [:track-controls name] value)))
 
 (re-frame/register-handler

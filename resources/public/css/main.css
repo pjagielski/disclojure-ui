@@ -30,6 +30,10 @@ table.seq td.x {
     color: #ffffff;
 }
 
+table.seq td.p {
+    background-color: greenyellow;
+}
+
 table.seq td.x.a7 {
     background-color: #EA1308;
 }
@@ -48,10 +52,6 @@ table.seq td.t {
 
 .seq-container {
     overflow-x: scroll;
-}
-
-.track-controls {
-    /*width: 200px;*/
 }
 
 .play-controls {

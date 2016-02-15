@@ -23,6 +23,11 @@
 
 (defn sep? [x] (= 0 (mod x 8)))
 
+(defn would-have-note [note time cursor-pos controls]
+    (and (= note (:note @cursor-pos))
+         (<= (:time @cursor-pos) time)
+         (< time (+ (:time @cursor-pos) (/ (get @controls :duration) res)))))
+
 (defn time-panel []
   (fn []
     [:table.seq
@@ -35,7 +40,8 @@
 (defn track-panel [instr]
   (let [part (re-frame/subscribe [:track-part instr])
         note-names (re-frame/subscribe [:notes])
-        controls (re-frame/subscribe [:track-controls])]
+        controls (re-frame/subscribe [:track-controls])
+        cursor-pos (reagent.core/atom {})]
     (fn []
       (let [from (:from @controls)]
         [:table.seq
@@ -52,8 +58,11 @@
                          (for [t (range from to)]
                            ^{:key (str t y)}
                            [:td {:class    (s/join " " [(when has-note? "x") (amp->class amp)
+                                                        (when (would-have-note y t cursor-pos controls) "p")
                                                         (when (sep? t) "t")])
-                                 :on-click #(re-frame/dispatch [:edit-track [instr t y has-note?]])}
+                                 :on-click #(re-frame/dispatch [:edit-track [instr t y has-note?]])
+                                 :on-mouse-enter #(reset! cursor-pos {:note y :time t})
+                                 :on-mouse-leave #(reset! cursor-pos {})}
                             (if has-note? (when (= t from) note) "-")])))))))))]))))
 
 (defn beat-panel []
@@ -77,12 +86,13 @@
                              :on-click #(re-frame/dispatch [:edit-beat [instr t has-note?]])}
                         "-"]))))))))])))
 
-(defn update-semi [f t controls]
+(defn update-control [key pred f t controls]
   (fn []
+    (let [val (get @controls key)]
       [:button.btn
-       {:on-click #(re-frame/dispatch [:change-track-control
-                                        [:from (f (get @controls :from))]])}
-       t]))
+       {:on-click #(when (pred val)
+                    (re-frame/dispatch [:change-track-control [key (f val)]]))}
+       t])))
 
 (defn track-control [key values controls]
   (fn []
@@ -98,12 +108,14 @@
       [:div.track-controls.form-inline
        [:div.row
         [:div.col-md-12
-         [update-semi dec "v" controls]
+         [update-control :from #(> % 24) dec "v" controls]
          [track-control :from (range 24 72) controls]
-         [update-semi inc "^" controls]]]
+         [update-control :from #(< % 72) inc "^" controls]]]
        [:div.row
         [:div.col-md-12
-         [track-control :duration [0.25 0.5 0.75 1 1.5 2 2.5 3 3.5] controls]]]])))
+         [update-control :duration #(> % 0.25) #(- % 0.25) "v" controls]
+         [track-control :duration (range 0.25 4 0.25) controls]
+         [update-control :duration #(< % 4) #(+ % 0.25) "^" controls]]]])))
 
 (defn control-button [name event]
   [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])

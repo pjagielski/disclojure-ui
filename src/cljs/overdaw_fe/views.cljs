@@ -23,10 +23,10 @@
 
 (defn sep? [x] (= 0 (mod x 8)))
 
-(defn would-have-note [note time cursor-pos controls]
+(defn would-have-note [note time cursor-pos duration]
     (and (= note (:note @cursor-pos))
          (<= (:time @cursor-pos) time)
-         (< time (+ (:time @cursor-pos) (/ (get @controls :duration) res)))))
+         (< time (+ (:time @cursor-pos) (/ duration res)))))
 
 (defn time-panel []
   (fn []
@@ -48,17 +48,19 @@
          (into ^{:key (str instr "-tbody")} [:tbody]
            (conj
              (for [y (reverse (range from (+ from semitones)))]
-               (let [mapping (map-row (get @part y)) note (get @note-names (str y))]
+               (let [mapping (map-row (get @part y)) note (get @note-names (str y))
+                     duration (get @controls :duration)]
                  (into
                    ^{:key y} [:tr]
                    (cons
-                     [:td.key (str y "/" note)]
+                     [:td.key {:on-click #(re-frame/dispatch [:play-note {:instr instr :duration duration :note y}])}
+                      (str y "/" note)]
                      (for [[from to has-note? amp] mapping]
                        (doall
                          (for [t (range from to)]
                            ^{:key (str t y)}
                            [:td {:class    (s/join " " [(when has-note? "x") (amp->class amp)
-                                                        (when (would-have-note y t cursor-pos controls) "p")
+                                                        (when (would-have-note y t cursor-pos duration) "p")
                                                         (when (sep? t) "t")])
                                  :on-click #(re-frame/dispatch [:edit-track [instr t y has-note?]])
                                  :on-mouse-enter #(reset! cursor-pos {:note y :time t})
@@ -76,7 +78,8 @@
              (into
                ^{:key instr} [:tr]
                (cons
-                 [:td.key instr]
+                 [:td.key {:on-click #(re-frame/dispatch [:play-kit instr])}
+                  instr]
                  (for [[from to has-note? amp] mapping]
                    (doall
                      (for [t (range from to)]

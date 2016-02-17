@@ -113,7 +113,7 @@
          (* envelope)
          (effects :pan pan :wet wet :room room :volume amp))))
 
-(definst wide-bass [freq 220 dur 1.0 cutoff 2500 sub-amp 0.4 amp 0.9]
+(definst wide-bass [freq 220 dur 1.0 cutoff 1500 sub-amp 0.4 amp 0.9]
    (let [osc1 (saw freq)
          osc2 (saw (* freq 0.99))
          sub  (* sub-amp (pulse (/ freq 2)))

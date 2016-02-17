@@ -7,6 +7,8 @@
             [ring.util.http-response :refer [ok]]
             [overdaw-fe.track :as t]
             [overdaw-fe.model :as m]
+            [overdaw-fe.runtime :as r]
+            [overdaw-fe.play :as pl]
             [overtone.live :as o]
             [leipzig.live :as live]))
 
@@ -42,36 +44,50 @@
                     :swagger-docs "/api/swagger.json")
         (swagger-docs "/swagger.json"
                       {:info {:title "OverDAW api"} :basePath "/api"})
-        (GET* "/track" [] (ok @raw-track))
-        (POST* "/play" [] (live/jam track) (ok))
-        (POST* "/stop" [] (live/stop) (ok))
+        (context "/track" []
+          (GET* "/" [] (ok @raw-track))
+          (POST* "/play" [] (live/jam track) (ok))
+          (POST* "/stop" [] (live/stop) (ok))
+          (PUT* "/" []
+                :body [body m/TrackMutation]
+                (dosync
+                  (let [by-part (group-by :part @raw-track)
+                        part (keyword (:part body))
+                        curr-track (get by-part part)]
+                    (->> (all-but-part by-part part)
+                         (concat (mutate-track! curr-track body part (m/add? body)))
+                         (sort-by :time)
+                         (reset-track track raw-track))
+                    (ok)))))
+        (context "/instruments" []
+          (GET* "/" []
+                (ok (r/find-instruments (symbol "overdaw-fe.inst"))))
+          (POST* "/play" []
+                 :body [body m/PlayNote]
+                 (pl/play (keyword (:instr body)) body)
+                 (ok)))
         (GET* "/notes/:from/:to" []
               :path-params [from :- Long, to :- Long]
               (->> (range from to)
                    (map (fn [x] {x (o/find-note-name x)}))
                    (into {})
                    ok))
-        (GET* "/kit" []
-              (ok (->> @kit
-                       (p/map-vals #(select-keys % [:amp])))))
-        (PUT* "/track" []
-              :body [body m/TrackMutation]
-              (dosync
-                (let [by-part (group-by :part @raw-track)
-                      part (keyword (:part body))
-                      curr-track (get by-part part)]
-                  (->> (all-but-part by-part part)
-                       (concat (mutate-track! curr-track body part (m/add? body)))
-                       (sort-by :time)
-                       (reset-track track raw-track))
-                  (ok))))
-        (PUT* "/beat" []
-              :body [body m/BeatMutation]
-              (dosync
-                (let [by-part (group-by :part @raw-track)
-                      curr-beat (get by-part :beat)]
-                  (->> (all-but-part by-part :beat)
-                       (concat (mutate-beat! curr-beat body (keyword (:drum body)) (m/add? body)))
-                       (sort-by :time)
-                       (reset-track track raw-track))
-                  (ok))))))))
+        (context "/kit" []
+          (GET* "/" []
+                (ok (->> @kit
+                         (p/map-vals #(select-keys % [:amp])))))
+          (POST* "/play" []
+                 :body [body m/PlayBeat]
+                 (apply (-> (keyword (:drum body)) t/kit :sound) [])
+                 (ok)))
+        (context "/beat" []
+          (PUT* "/" []
+                :body [body m/BeatMutation]
+                (dosync
+                  (let [by-part (group-by :part @raw-track)
+                        curr-beat (get by-part :beat)]
+                    (->> (all-but-part by-part :beat)
+                         (concat (mutate-beat! curr-beat body (keyword (:drum body)) (m/add? body)))
+                         (sort-by :time)
+                         (reset-track track raw-track))
+                    (ok)))))))))

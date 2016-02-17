@@ -64,19 +64,33 @@
 (re-frame/register-handler
   :play
   (fn [db _]
-    (POST (str c/api-base "/play"))
+    (POST (str c/api-base "/track/play"))
     db))
 
 (re-frame/register-handler
   :stop
   (fn [db _]
-    (POST (str c/api-base "/stop"))
+    (POST (str c/api-base "/track/stop"))
     db))
 
 (re-frame/register-handler
   :change-track-control
   (fn [db [_ [name value]]]
     (assoc-in db [:track-controls name] value)))
+
+(re-frame/register-handler
+  :play-note
+  (fn [db [_ note]]
+    (POST (str c/api-base "/instruments/play")
+          {:params note :format :json})
+    db))
+
+(re-frame/register-handler
+  :play-kit
+  (fn [db [_ drum]]
+    (POST (str c/api-base "/kit/play")
+          {:params {:drum drum} :format :json})
+    db))
 
 (re-frame/register-handler
   :edit-beat

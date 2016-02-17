@@ -1,6 +1,10 @@
 (ns overdaw-fe.play
   (:require [leipzig.live :as live]
+            [leipzig.temperament :refer [equal]]
             [overdaw-fe.inst :as i]))
+
+(defn play [name params]
+  (live/play-note (merge params {:part name :pitch (equal (:note params))})))
 
 (defmethod live/play-note :supersaw [{hertz :pitch seconds :duration amp :amp}]
   (when hertz

@@ -1,6 +1,14 @@
 (ns overdaw-fe.model
   (:require [schema.core :as s]))
 
+(s/defschema PlayNote
+  {:instr    String
+   :duration Double
+   :note     Integer})
+
+(s/defschema PlayBeat
+  {:drum String})
+
 (def MutationType (s/enum :add :remove))
 
 (s/defschema TrackMutation

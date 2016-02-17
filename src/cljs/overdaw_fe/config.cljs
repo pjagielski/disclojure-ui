@@ -6,8 +6,7 @@
 (when debug?
   (enable-console-print!))
 
-(def api-base
-  "http://localhost:3000/api")
+(def api-base "/api")
 
 (def semitones 18)
 (def ticks (* 8 8))

@@ -6,12 +6,12 @@
 
 (defn new-system [config]
   (component/map->SystemMap
-    {:track (reify component/Lifecycle
+    {:state (reify component/Lifecycle
               (start [_] {:raw-track (ref raw-track)
                           :track     (ref (track raw-track))
-                          :kit (ref kit)}))
+                          :kit       (ref kit)}))
      :http  (component/using
               (http-kit/create
                 (:http config)
                 {:fn handler/create})
-              [:track])}))
+              [:state])}))

@@ -81,6 +81,18 @@
          (where :part (is :bass))
          (all :amp 2.0))))
 
+(def random-bass
+  (->> (phrase (repeat 1/2)
+               (take 16 (repeatedly #(int (rand 7))))
+               ;(concat (range 8) (range 8 0 -1))
+               )
+       (wherever :pitch, :pitch (comp scale/C scale/low scale/pentatonic))
+       ;(where :part (is :g-bass))
+       (where :part (is :pad))
+       ;(where :part (is :supersaw))
+       ;(all :amp 2.0)
+        ))
+
 (def pretend-bass
   (->> (phrase (repeat 1/2)
                (concat
@@ -154,25 +166,33 @@
        ])
     (all :part :beat)))
 
+;(def raw-track
+;  (->>
+;    []
+;    ;(times 2 house-beat-1)
+;    ;(times 1 garage-beat-1)
+;    ;(with (times 1 beat-0))
+;    ;(with (times 2 b2))
+;    ;(with (times 1 b3))
+;    ;(with (times 1 b4))
+;    ;(with (times 1 b5))
+;    ;(with (times 1 b6))
+;    ;(with (times 1 face-bass))
+;    ;(with (times 1 face-glide))
+;    ;(with (times 1 pretend-bass))
+;    ;(with (times 1 random-bass))
+;    ;(with (times 1 s))
+;    ;(with (times 2 s1))
+;    ))
+
 (def raw-track
-  (->>
-    ;(times 2 house-beat-1)
-    (times 2 garage-beat-1)
-    ;(times 1 beat-0)
-    ;(with (times 2 b2))
-    ;(with (times 1 b3))
-    ;(with (times 1 b4))
-    (with (times 1 b5))
-    ;(with (times 1 b6))
-    ;(with (times 1 face-bass))
-    ;(with (times 1 face-glide))
-    ;(with (times 2 pretend-bass))
-    ;(with (times 1 s))
-    ;(with (times 2 s1))
-    ))
+  {:bass (times 1 face-glide)
+   :beat (times 2 garage-beat-1)})
 
 (defn track [raw-track]
   (->> raw-track
+       vals
+       (reduce with)
        (wherever :pitch, :pitch temperament/equal)
        (where :time (bpm 128))
        (where :duration (bpm 128))))

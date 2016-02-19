@@ -8,7 +8,7 @@ body {
 
 table.seq {
     border-spacing: 0;
-    width: 2016px;
+    max-width: 2016px;
 }
 
 table.seq th, td {

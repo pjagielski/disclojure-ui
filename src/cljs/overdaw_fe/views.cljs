@@ -3,14 +3,14 @@
   (:require [re-frame.core :as re-frame]
             [clojure.set :refer [union]]
             [clojure.string :as s]
-            [overdaw-fe.config :refer [res ticks semitones]]))
+            [overdaw-fe.config :refer [res semitones]]))
 
 (defn map-note [[idx result] {:keys [time duration amp]}]
   (let [time-idx (/ time res)
         new-idx (+ time-idx (/ duration res))]
     [new-idx (conj result [idx time-idx false amp] [time-idx new-idx true amp])]))
 
-(defn map-row [times]
+(defn map-row [times ticks]
   (let [[end reduced] (reduce map-note [0 []] times)]
     (conj reduced [end ticks false])))
 
@@ -28,27 +28,33 @@
          (<= (:time @cursor-pos) time)
          (< time (+ (:time @cursor-pos) (/ duration res)))))
 
-(defn time-panel []
-  (fn []
-    [:table.seq
-     [:thead
-      (into [:tr]
-        (cons [:th {:class "key"} "x"]
-          (for [x (range ticks)]
-            [:td {:class (when (sep? x) "t")} x])))]]))
+(defn ticks [bars]
+  (* 8 bars))
 
-(defn track-panel [instr]
-  (let [part (re-frame/subscribe [:track-part instr])
+(defn time-panel []
+  (let [controls (re-frame/subscribe [:track-controls])]
+    (fn []
+      [:table.seq
+       [:thead
+        (into [:tr]
+          (cons [:th {:class "key"} "x"]
+            (for [x (range (ticks (get @controls :bars)))]
+              [:td {:class (when (sep? x) "t")} x])))]])))
+
+
+(defn track-panel []
+  (let [controls (re-frame/subscribe [:track-controls])
+        part (re-frame/subscribe [:track-part])
         note-names (re-frame/subscribe [:notes])
-        controls (re-frame/subscribe [:track-controls])
         cursor-pos (reagent.core/atom {})]
     (fn []
-      (let [from (:from @controls)]
+      (let [from (:from @controls) instr (:instr @controls)]
         [:table.seq
          (into ^{:key (str instr "-tbody")} [:tbody]
            (conj
              (for [y (reverse (range from (+ from semitones)))]
-               (let [mapping (map-row (get @part y)) note (get @note-names (str y))
+               (let [mapping (map-row (get @part y) (ticks (get @controls :bars)))
+                     note (get @note-names (str y))
                      duration (get @controls :duration)]
                  (into
                    ^{:key y} [:tr]
@@ -69,12 +75,13 @@
 
 (defn beat-panel []
   (let [beat (re-frame/subscribe [:beat])
-        kit (re-frame/subscribe [:kit])]
+        kit (re-frame/subscribe [:kit])
+        controls (re-frame/subscribe [:track-controls])]
     (fn []
       [:table.seq
        (into ^{:key "beat-tbody"} [:tbody]
          (for [instr (keys @kit)]
-           (let [mapping (map-row (get @beat instr))]
+           (let [mapping (map-row (get @beat instr) (ticks (get @controls :bars)))]
              (into
                ^{:key instr} [:tr]
                (cons
@@ -97,27 +104,30 @@
                     (re-frame/dispatch [:change-track-control [key (f val)]]))}
        t])))
 
-(defn track-control [key values controls]
+(defn track-control [key values-fn controls f]
   (fn []
     (into [:select.form-control.track-control
            {:name      (str key) :value (get @controls key)
             :on-change (fn [e] (re-frame/dispatch [:change-track-control
-                                                   [key (js/Number (.. e -target -value))]]))}]
-          (map (fn [x] [:option {:value x} x]) values))))
+                                                   [key (f (.. e -target -value))]]))}]
+          (map (fn [x] [:option {:value x} x]) (values-fn)))))
 
 (defn update-control-panel [key start end step controls]
-  [:div.row
-   [:div.col-md-12
-    [step-control key #(> % start) #(- % step) "v" controls]
-    [track-control key (range start end step) controls]
-    [step-control key #(< % end) #(+ % step) "^" controls]]])
+  (fn []
+    [:div.row
+     [:div.col-md-12
+      [step-control key #(> % start) #(- % step) "v" controls]
+      [track-control key #(range start end step) controls js/Number]
+      [step-control key #(< % end) #(+ % step) "^" controls]]]))
 
 (defn track-control-panel []
-  (let [controls (re-frame/subscribe [:track-controls])]
+  (let [controls (re-frame/subscribe [:track-controls])
+        instruments (re-frame/subscribe [:instruments])]
     (fn []
       [:div.track-controls.form-inline
        [update-control-panel :from 24 72 1 controls]
-       [update-control-panel :duration 0.25 4 0.25 controls]])))
+       [update-control-panel :duration 0.25 4 0.25 controls]
+       [track-control :instr #(deref instruments) controls identity]])))
 
 (defn control-button [name event]
   [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])
@@ -135,15 +145,15 @@
      [:div.row
       [:h2 "OverDAW"]]
      [:div.row
-      [:div.col-md-10
+      [:div.col-md-7
        [:div.seq-container
         [time-panel]
         [:hr]
-        [track-panel "wide-bass"]
+        [track-panel]
         [:hr]
         [beat-panel]
         [:hr]]]
-      [:div.col-md-2
+      [:div.col-md-5
        [track-control-panel]]]
      [:div.row.play-controls
       [play-control-panel]]]))

@@ -9,19 +9,24 @@
             [overdaw-fe.model :as m]
             [overdaw-fe.runtime :as r]
             [overdaw-fe.play :as pl]
+            [overdaw-fe.live :as l]
             [overtone.live :as o]
             [leipzig.live :as live]))
 
 ; -> cljc
 (defn mutate-beat! [current {:keys [time duration amp]} drum add?]
-  (if add?
-    (conj current {:time time :duration duration :drum drum :part :beat :amp amp})
-    (remove #(and (= (double time) (double (:time %))) (= drum (:drum %))) current)))
+  (->>
+    (if add?
+      (conj current {:time time :duration duration :drum drum :part :beat :amp amp})
+      (remove #(and (= (double time) (double (:time %))) (= drum (:drum %))) current))
+    (sort-by :time)))
 
 (defn mutate-track! [current {:keys [time duration amp pitch]} part add?]
-  (if add?
-    (conj current {:time time :duration duration :pitch pitch :part part :amp amp})
-    (remove #(and (= (double time) (double (:time %))) (= pitch (:pitch %))) current)))
+  (->>
+    (if add?
+      (conj current {:time time :duration duration :pitch pitch :part part :amp amp})
+      (remove #(and (= (double time) (double (:time %))) (= pitch (:pitch %))) current))
+    (sort-by :time)))
 
 (defn all-but-part [by-part part]
   (-> by-part
@@ -33,7 +38,7 @@
   (ref-set raw-track-ref new-track)
   (ref-set track-ref (t/track new-track)))
 
-(p/defnk create [[:track track raw-track kit]]
+(p/defnk create [[:state track raw-track kit]]
   (routes
     (route/resources "/")
     (GET "/" []
@@ -51,14 +56,13 @@
           (PUT* "/" []
                 :body [body m/TrackMutation]
                 (dosync
-                  (let [by-part (group-by :part @raw-track)
-                        part (keyword (:part body))
-                        curr-track (get by-part part)]
-                    (->> (all-but-part by-part part)
-                         (concat (mutate-track! curr-track body part (m/add? body)))
-                         (sort-by :time)
-                         (reset-track track raw-track))
-                    (ok)))))
+                  (let [part (keyword (:part body))]
+                    (as->
+                      (get @raw-track part) $
+                      (mutate-track! $ body part (m/add? body))
+                      (l/alter-raw-track raw-track part $)))
+                  (l/commit-track raw-track track)
+                  (ok))))
         (context "/instruments" []
           (GET* "/" []
                 (ok (r/find-instruments (symbol "overdaw-fe.inst"))))
@@ -74,8 +78,7 @@
                    ok))
         (context "/kit" []
           (GET* "/" []
-                (ok (->> @kit
-                         (p/map-vals #(select-keys % [:amp])))))
+                (ok (p/map-vals #(select-keys % [:amp]) @kit)))
           (POST* "/play" []
                  :body [body m/PlayBeat]
                  (apply (-> (keyword (:drum body)) t/kit :sound) [])
@@ -84,10 +87,9 @@
           (PUT* "/" []
                 :body [body m/BeatMutation]
                 (dosync
-                  (let [by-part (group-by :part @raw-track)
-                        curr-beat (get by-part :beat)]
-                    (->> (all-but-part by-part :beat)
-                         (concat (mutate-beat! curr-beat body (keyword (:drum body)) (m/add? body)))
-                         (sort-by :time)
-                         (reset-track track raw-track))
-                    (ok)))))))))
+                  (as->
+                    (get @raw-track :beat) $
+                    (mutate-beat! $ body (keyword (:drum body)) (m/add? body))
+                    (l/alter-raw-track raw-track :beat $))
+                  (l/commit-track raw-track track)
+                  (ok))))))))

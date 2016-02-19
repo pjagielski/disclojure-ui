@@ -29,3 +29,11 @@
 (defmethod live/play-note :pad [{hertz :pitch seconds :duration amp :amp}]
   (when hertz
     (i/pad :freq hertz :dur seconds :amp (or amp 1))))
+
+(defmethod live/play-note :talking-bass [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (i/talking-bass :freq hertz :dur seconds :amp (or amp 1))))
+
+(defmethod live/play-note :g-bass [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (i/g-bass :freq hertz :dur seconds :amp (or amp 1))))

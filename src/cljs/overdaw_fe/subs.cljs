@@ -11,9 +11,9 @@
 
 (re-frame/register-sub
   :track-part
-  (fn [db [_ type]]
-    (reaction
-      (-> (:track @db) (get type)))))
+  (fn [db [_]]
+    (let [instr (reaction (get-in @db [:track-controls :instr]))]
+      (reaction (-> (:track @db) (get @instr))))))
 
 (re-frame/register-sub
   :beat
@@ -30,6 +30,10 @@
 (re-frame/register-sub
   :kit
   (fn [db] (reaction (:kit @db))))
+
+(re-frame/register-sub
+  :instruments
+  (fn [db] (reaction (:instruments @db))))
 
 (re-frame/register-sub
   :track-controls

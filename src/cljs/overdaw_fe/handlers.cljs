@@ -1,37 +1,35 @@
 (ns overdaw-fe.handlers
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [re-frame.core :as re-frame]
-            [plumbing.core :refer [map-vals]]
+            [plumbing.core :refer [map-vals map-keys]]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
             [ajax.core :refer [GET POST PUT]]
             [overdaw-fe.db :as db]
             [overdaw-fe.config :as c :refer [res]]))
 
-(defn- wait-and-dispatch [ch event]
-  (go (let [response (<! ch)]
-        (re-frame/dispatch-sync [event (:body response)]))))
-
 (re-frame/register-handler
   :initialize-db
   (fn [_ _]
     (re-frame/dispatch [:sync-track])
     (re-frame/dispatch [:sync-kit])
+    (re-frame/dispatch [:sync-instruments])
     (re-frame/dispatch [:sync-notes [24 96]])
     db/default-db))
 
 (re-frame/register-handler
   :sync-track
   (fn [db _]
-    (wait-and-dispatch (http/get (str c/api-base "/track"))
-                       :sync-track-response)
+    (GET (str c/api-base "/track")
+         {:response-format :json :keywords? true
+          :handler #(re-frame/dispatch [:sync-track-response (js->clj %1)])})
     db))
 
 (re-frame/register-handler
   :sync-track-response
   (fn [db [_ track]]
     (->> track
-         (group-by :part)
+         (map-keys name)
          (map-vals #(group-by :pitch %))
          (assoc db :track))))
 
@@ -60,6 +58,19 @@
   :sync-kit-response
   (fn [db [_ kit]]
     (assoc db :kit (into (sorted-map) kit))))
+
+(re-frame/register-handler
+  :sync-instruments
+  (fn [db _]
+    (GET (str c/api-base "/instruments")
+         {:response-format :json
+          :handler #(re-frame/dispatch [:sync-instruments-response (js->clj %1)])})
+    db))
+
+(re-frame/register-handler
+  :sync-instruments-response
+  (fn [db [_ instruments]]
+    (assoc db :instruments instruments)))
 
 (re-frame/register-handler
   :play

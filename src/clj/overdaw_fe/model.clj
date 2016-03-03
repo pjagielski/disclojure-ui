@@ -1,5 +1,6 @@
 (ns overdaw-fe.model
-  (:require [schema.core :as s]))
+  (:require [schema.core :as s])
+  (:import (javafx.scene.control TextInputControl$UndoRedoChange)))
 
 (s/defschema PlayNote
   {:instr    String
@@ -25,6 +26,11 @@
    :amp      Number
    :duration Number
    :type     MutationType})
+
+(s/defschema ControlChange
+  {:instr    String
+   :control  String
+   :value    Double})
 
 (defn add? [mutation]
   (= :add (:type mutation)))

@@ -38,7 +38,7 @@
   (ref-set raw-track-ref new-track)
   (ref-set track-ref (t/track new-track)))
 
-(p/defnk create [[:state track raw-track kit]]
+(p/defnk create [[:state track raw-track kit controls]]
   (routes
     (route/resources "/")
     (GET "/" []
@@ -81,7 +81,7 @@
                 (ok (p/map-vals #(select-keys % [:amp]) @kit)))
           (POST* "/play" []
                  :body [body m/PlayBeat]
-                 (apply (-> (keyword (:drum body)) t/kit :sound) [])
+                 (apply (-> (get @kit (keyword (:drum body))) :sound) [])
                  (ok)))
         (context "/beat" []
           (PUT* "/" []
@@ -92,4 +92,11 @@
                     (mutate-beat! $ body (keyword (:drum body)) (m/add? body))
                     (l/alter-raw-track raw-track :beat $))
                   (l/commit-track raw-track track)
-                  (ok))))))))
+                  (ok))))
+        (context "/controls" []
+          (PUT* "/" []
+                :body [body m/ControlChange]
+                (let [instr (keyword (:instr body))
+                      control (keyword (:control body))]
+                  (swap! controls assoc-in [instr control] (:value body)))
+                (ok)))))))

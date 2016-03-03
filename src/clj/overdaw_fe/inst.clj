@@ -1,5 +1,6 @@
 (ns overdaw-fe.inst
-  (:require [overtone.live :refer :all]))
+  (:require [overtone.live :refer :all]
+            [leipzig.live :as live]))
 
 (defcgen cut-out [input {:default :none}]
          (:ar (let [_ (detect-silence input :action FREE)]
@@ -10,6 +11,7 @@
                   pan    {:default 0}
                   wet    {:default 0.33}
                   room   {:default 0.5}
+                  damp   {:default 0.5}
                   volume {:default 1.0}
                   early  {:default 0.1}
                   high   {:default 20000}
@@ -17,7 +19,7 @@
          (:ar (-> input
                   (* volume)
                   (pan2 pan)
-                  (free-verb :mix wet :room room)
+                  (free-verb :mix wet :room room :damp damp)
                   (lpf high)
                   cut-out))
          (:default :ar))
@@ -41,7 +43,7 @@
                 (mul-add (* freq mod1-index) 0))
        carrier (sin-osc (+ mod1 (* freq car-partial)))]
    (-> carrier
-       (* (env-gen (adsr 0.02 0.2 0.1 0.1) (line:kr 1 0 dur)))
+       (* (env-gen (adsr 0.02 0.2 0.1 0.1) (line:kr 1 0 dur) :action FREE))
        (* amp)
        pan2)))
 
@@ -50,7 +52,7 @@
      (-> (sin-osc [(/ freq 2) (+ (midicps 0.17) (/ freq 2)) (+ (midicps 0.15) (/ freq 2))])
          ;(tanh)
          (lpf (+ cutoff (* env-amount fil-env)))
-         (* (env-gen (adsr 0.1 0.4 0.4 0.4) (line:kr 1 0 dur)))
+         (* (env-gen (adsr 0.1 0.4 0.4 0.4) (line:kr 1 0 dur) :action FREE))
          (* volume)
          pan2)))
 
@@ -62,7 +64,7 @@
      (-> (sin-osc (+ (* lfo mod) (/ freq 4)))
          ;(clip2 0.8)
          (rlpf (+ 20 (* env-amount cutoff fil-env)) 1/7)
-         (* (env-gen (adsr 0.02 0.2 0.1 0.1) (line:kr 1 0 dur)))
+         (* (env-gen (adsr 0.02 0.2 0.1 0.1) (line:kr 1 0 dur) :action FREE))
          ;(pan2)
          (effects :pan pan :wet wet :room room :volume volume))))
 
@@ -74,11 +76,11 @@
          subs (mix (repeatedly 5 #(snd-fn (/ freq 4) pulse)))
          snd  (+ (* 1.1 saws) (* 0.45 subs))
          fil-env (env-gen (adsr 0.1 0.9 0.1 0.6) (line:kr 1 0 duration))
-         snd (rlpf snd (+ cutoff (* env-amount fil-env)) 0.65)
+         snd (rlpf snd (+ cutoff (* env-amount fil-env)) 0.75)
          env (env-gen (adsr 0.1 0.45 0.20) (line:kr 1 0 duration) :action FREE)]
      (pan2 (* snd env amp))))
 
-(defsynth dub [freq 440 divisor 2.0 depth 2.0 out-bus 0 duration 1 bpm 120 wobble 5/2]
+(definst dub [freq 440 divisor 2.0 depth 2.0 out-bus 0 duration 1 bpm 120 wobble 5/2]
   (let [modulator (/ freq divisor)
         mod-env   (env-gen (lin 1 0 6))
         snd       (lf-tri (+ freq (* mod-env (* freq depth) (sin-osc modulator))))
@@ -90,28 +92,28 @@
         wob       (+ wob (bpf wob 3500 2))
         verb      (* 0.3 (g-verb wob 9 0.7 0.7))
         env       (env-gen (adsr 0.1 1.4 0.20) (line:kr 1 0 duration) :action FREE)]
-    (out out-bus (pan2 (* env (+ wob (* 0.8 verb)))))))
+    (pan2 (* env (+ wob (* 0.8 verb))))))
 
 (definst dark-bass [freq 110 volume 2.0 dur 1.0]
-   (let [subfreq (/ freq 2)]
+   (let [subfreq (/ freq 1)]
      (->
        (sin-osc [subfreq (- subfreq 2) (+ subfreq 2)])
        tanh
-       (* (env-gen (perc 0 dur)))
+       (* (env-gen (perc 0 dur) :action FREE))
        (* (x-line:kr 1 0.6 0.1))
        (* volume)
        pan2)))
 
-(definst indie-bass [freq 440 dur 1.0 amp 1.0 pan 0 wet 0.2 room 0.9 cutoff 5000 fil-dur 0.5]
-   (let [envelope (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))
-         level (+ 1000 (env-gen (perc 0 fil-dur) :level-scale cutoff))
+(definst indie-bass [freq 440 dur 1.0 amp 1.0 pan 0 wet 0.2 room 0.5 damp 0.7 cutoff 4500 fil-dur 0.5]
+   (let [envelope (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur) :action FREE)
+         level (+ (* 2 freq) (env-gen (perc 0 fil-dur) :level-scale cutoff))
          osc (mix [(saw freq)
                    (saw (* freq 1.009))
                    (pulse (/ freq 2) 0.5)])]
      (-> osc
-         (lpf level)
+         (rlpf level 0.7)
          (* envelope)
-         (effects :pan pan :wet wet :room room :volume amp))))
+         (effects :pan pan :wet wet :room room :volume amp :damp damp))))
 
 (definst wide-bass [freq 220 dur 1.0 cutoff 1500 sub-amp 0.4 amp 0.9]
    (let [osc1 (saw freq)
@@ -119,18 +121,18 @@
          sub  (* sub-amp (pulse (/ freq 2)))
          snd  (mix [osc1 osc2 sub])
          snd  (lpf snd (+ 100 (env-gen (perc 0 1.5) :level-scale cutoff)))
-         env  (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))]
+         env  (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur) :action FREE)]
       (pan2 (* snd env amp))))
 
-(definst bass [freq 220 dur 1.0 amp 0.5 osc-mix 0.2 cutoff 2500 fil-amt 100]
+(definst bass [freq 220 dur 1.0 amp 0.5 osc-mix 0.7 cutoff 4500]
    (let [sub-freq (/ freq 2)
          osc1 (saw:ar freq)
-         osc2 (pulse sub-freq 0.5)
+         osc2 (pulse sub-freq 0.51)
          osc (+ (* osc-mix osc2) (* (- 1 osc-mix) osc1))
          snd [osc osc]
-         level (+ fil-amt (env-gen (perc 0 dur) :level-scale cutoff))
+         level (+ (/ freq 2) (env-gen (perc 0 dur) :level-scale cutoff))
          snd (rlpf snd level 0.6)
-         env (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))]
+         env (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur) :action FREE)]
      (out 0 (* amp env snd))))
 
 (definst bend-noise [amp 0.7 decay 0.85 cutoff 0.65]
@@ -141,7 +143,7 @@
      (out 0 (* amp env snd))))
 
 (definst pad [freq 220 dur 1.0 amp 0.5 pan 0 cutoff 2500 fil-amt 100]
-   (let [env (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur))
+   (let [env (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur) :action FREE)
          fil-env (+ fil-amt (env-gen (perc 0 dur) :level-scale cutoff))
          osc (sin-osc freq)]
      (-> osc
@@ -150,25 +152,45 @@
          (echo)
          pan2)))
 
-(definst strings [freq 220 sustain 1.7 release 0.4 amp 1 cutoff 0.1 contour 0.3]
+(definst strings [freq 220 dur 1.0 amp 1 cutoff 0.1 contour 0.3]
    (let [freqs [freq (* 0.99 freq) (* 1.10 freq)]
          src   (saw freqs)
          fil-env (env-gen (adsr 0.1 0.9 0.1 0.6))
-         snd   (bpf src (+ (* fil-env (* contour 10000))
+         snd   (bpf src (+ (* fil-env (* contour freq 50))
                            (lin-exp cutoff 0.0 1.0 20.0 20000.0)))
-         env   (env-gen (env-lin 0.01 sustain release) 1 1 0 1 FREE)]
-     (out 0 (pan2 (* amp env snd)))))
+         env   (env-gen (asr 0 1 1) (line:kr 1.0 0.0 dur) :action FREE)]
+     (pan2 (* amp env snd))))
+
+(def atw-bass (sample "resources/sounds/samples/atw_bass.aif"))
+(def phoenix (sample "resources/sounds/samples/phoenix.aif"))
+(def robot-drive (sample "resources/sounds/samples/robot_drive.wav"))
+
+(defsynth sampler [in 0 bpm 128 beats 4 amp 0.95 pos 0 out-bus 0]
+    (let [rate (/ (buf-dur in) (* beats (/ 60 bpm)))
+          output (play-buf 1 in rate :start-pos pos :action FREE)]
+      (out out-bus (* amp (pan2 output)))))
+
+(def samples
+  {:atw-bass #(sampler atw-bass :beats 16)
+   :phoenix #(sampler phoenix :beats 4)
+   :robot-drive #(sampler robot-drive :beats 2)})
+
+(defmethod live/play-note :sampler [note]
+  (when-let [f (-> note :sample samples)]
+    (f)))
 
 (comment
   (stop)
+  (atw-bass)
+  (phoenix)
   (bend-noise)
   (pad)
-  (strings)
+  (strings :freq 200)
   (bass :freq 220)
   (wide-bass :freq 220)
-  (indie-bass :freq 220)
+  (indie-bass :freq 110 :room 0.75 :damp 0.2 :dur 0.5)
   (supersaw :cutoff 5000 :env-amount 0.9)
   (g-bass :freq 220 :cutoff 5000 :env-amount 0.1)
   (d-bass)
   (dark-bass 440)
-  (dub 100))
+  (dub 200))

@@ -6,7 +6,7 @@
                  [metosin/palikka "0.3.0"]
                  [metosin/kekkonen "0.1.0"]
                  [overtone "0.9.1"]
-                 [leipzig "0.8.0"]
+                 [leipzig "0.9.0"]
                  [compojure "1.4.0"]
                  [metosin/compojure-api "0.24.4"]
 
@@ -14,7 +14,8 @@
                  [re-frame "0.6.0"]
                  [garden "1.3.0"]
                  [cljs-http "0.1.39"]
-                 [cljs-ajax "0.5.3"]]
+                 [cljs-ajax "0.5.3"]
+                 [shodan "0.4.2"]]
 
   :min-lein-version "2.5.3"
 

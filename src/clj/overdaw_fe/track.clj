@@ -1,6 +1,7 @@
 (ns overdaw-fe.track
   (:require [overtone.live :as o]
             [leipzig.melody :refer :all]
+            [leipzig.chord :refer :all]
             [leipzig.scale :as scale]
             [leipzig.live :as live]
             [leipzig.temperament :as temperament]
@@ -8,15 +9,14 @@
             [overdaw-fe.kit :as k]
             [overdaw-fe.play]))
 
-(def kit (k/make-kit "2step"))
+(def kit (atom (k/make-kit "big_room")))
 
 (defn tap [drum times length & {:keys [amp] :or {amp 1}}]
   (map #(zipmap [:time :duration :drum :amp]
                 [%1 (- length %1) drum amp]) times))
 
-;; todo kit global variable
 (defmethod live/play-note :beat [note]
-  (when-let [fn (-> note :drum kit :sound)]
+  (when-let [fn (-> (get @kit (:drum note)) :sound)]
     (fn :amp (:amp note))))
 
 (def s
@@ -25,7 +25,8 @@
                [nil [3 5 9] [2 5 9] [0 4 7] [0 4 7] [0 4 7]
                 [-1 2 5] [-1 2 5] [-1 2 5] [-1 2 5] [0 5 7]])
        (wherever :pitch, :pitch (scale/from (o/note :C5)))
-       (where :part (is :supersaw))))
+       (all :amp 2)
+       (all :part :supersaw)))
 
 (def s1
   (->> (phrase [1/2 3/4 3/4 3/4 3/4 1
@@ -33,7 +34,15 @@
                [nil 2 5 4 2 0
                 2 5 4 0 -3])
        (wherever :pitch, :pitch (scale/from (o/note :C6)))
-       (where :part (is :supersaw))))
+       (all :part :supersaw)))
+
+(def s2
+  (->> (phrase [4 4]
+               [(-> triad (root 1))
+                (-> triad (inversion 2) (root 4))])
+       (wherever :pitch, :pitch (comp scale/C scale/major))
+       (where :amp (is 1))
+       (all :part :indie-bass)))
 
 (def b1
   (->> (phrase [3 3 2]
@@ -45,14 +54,14 @@
   (->> (phrase [3/4 1/4 1/2 1/4 1/2 1/4 1/2 3/4 1/4 1/2 1/4 3/4 1/4 1/4 1/4 1/2 1/4 1/2 1/4 1/4]
                [-2 nil -2 nil -2 nil -2 -2 nil -1 nil -1 0 -3 nil -3 -3 -3 -4 -3])
        (wherever :pitch, :pitch (scale/from (o/note :C3)))
-       (where :part (is :garage-bass))
+       (all :part :garage-bass)
        (all :amp 2.0)))
 
 (def b3
   (->> (phrase [1/4 1/4 1/4 1 1/2 1/2 1 1/4]
                [10 10 10 nil 10 10 nil 10])
        (wherever :pitch, :pitch (scale/from (o/note :C2)))
-       (where :part (is :indie-bass))
+       (all :part :indie-bass)
        (all :amp 2.0)))
 
 (def b4
@@ -66,19 +75,22 @@
   (->> (phrase (cycle [(- 4 1/2) (+ 4 1/2)])
                [8 6 4 1])
        (wherever :pitch, :pitch (scale/from (o/note :C2)))
-       (where :part (is :wide-bass))
+       (all :part :wide-bass)
        (all :amp 2.0)))
 
 (def b6
   (let [theme [3/4 3/4 3/4 1/2 3/4 1/2]]
     (->> (phrase (concat [3/4 3/4 3/4 1/2 1/4 1/2 1/2]
                          (flatten (repeat 3 theme)))
-                 (concat [4 4 4 4 16 4 16]
+                 (concat
+                         [4 4 4 4 16 4 16]
+                         ;[4 4 4 4 4 4 4]
                          [7 7 7 7 7 7]
                          [9 9 9 9 9 9]
                          [11 11 12 12 12 12]))
          (wherever :pitch, :pitch (scale/from (o/note :C2)))
-         (where :part (is :bass))
+         (all :part :bass)
+         ;(where :part (is :indie-bass))
          (all :amp 2.0))))
 
 (def random-bass
@@ -88,7 +100,7 @@
                )
        (wherever :pitch, :pitch (comp scale/C scale/low scale/pentatonic))
        ;(where :part (is :g-bass))
-       (where :part (is :pad))
+       (all :part :pad)
        ;(where :part (is :supersaw))
        ;(all :amp 2.0)
         ))
@@ -102,7 +114,7 @@
                  [[2 -10]]
                  [[9 -3]]))
        (wherever :pitch, :pitch (scale/from (o/note :C4)))
-       (where :part (is :indie-bass))))
+       (all :part :indie-bass)))
 
 (def face-bass
   (let [theme (concat (repeat 5 3/4) [1/4])]
@@ -113,14 +125,37 @@
          (then (phrase (concat (repeat 4 3/4) [1])
                        [-11 -11 -11 -6 -6]))
          (wherever :pitch, :pitch (scale/from (o/note :C3)))
-         (where :part (is :bass)))))
+         (all :part :bass))))
 
 (def face-glide
   (->> (phrase [3 1 4 3 1 2 1 1]
                [-4 -4 -6 -8 -8 -11 -6 -6])
        (wherever :pitch, :pitch (scale/from (o/note :C3)))
        (where :amp (is 1))
-       (where :part (is :bass))))
+       (all :part :bass)))
+
+(def steel-drum
+  (->> (phrase [3/4 3/4 1 1/2 1 3/4 3/4 1/2 1/4 1/4 1/2 1]
+               [-3 -3 -3 -3 -3 0 0 0 nil 7 4 4])
+       (wherever :pitch, :pitch (scale/from (o/note :C3)))
+       (where :amp (is 1))
+       (all :part :bass)))
+
+(def steel-drum-2
+  (->> steel-drum
+       (all :part :indie-bass)))
+
+(def steel-drum-3
+  (->> (phrase [3/4 3/4 1 1/2 1 3/4 3/4 1/2 1/4 1/4 1/2 1]
+               [-3 -3 -3 -3 -3 0 0 0 nil 7 4 4])
+       (wherever :pitch, :pitch (scale/from (o/note :C5)))
+       (all :part :supersaw)))
+
+(def steel-drum-4
+  (->> (phrase [3/4 3/4 1 1/2 1 3/4 3/4 1/2 1/4 1/4 1/2 1]
+               [-3 -3 -3 -3 -3 0 0 0 nil 7 4 4])
+       (wherever :pitch, :pitch (scale/from (o/note :C4)))
+       (all :part :strings)))
 
 (def beat-1
   (->>
@@ -140,15 +175,15 @@
   (->>
     (reduce with
       [(tap :kick (range 8) 8)
-       (tap :snare1 [7/4 (+ 4 7/4)] 8 :amp 1.5)
-       (tap :snare2 [9/4 (+ 4 9/4)] 8 :amp 0.7)
+       ;(tap :snare1 [(+ 4 7/4)] 8 :amp 1.5)
+       ;(tap :snare2 [9/4] 8 :amp 0.7)
        (tap :claps   (range 1 8 2) 8)
-       (tap :hat_1 (range 1/2 8 1) 8)
-       (tap :hat_1 [7/4 9/4 23/4 25/4] 8 :amp 0.5)
-       (tap :hat_2 (range 1/2 8 1) 8)
-       (tap :hat_2 [1/4 (+ 4 1/4)] 8 :amp 0.4)
+       ;(tap :hat_1 (range 1/2 8 1) 8)
+       ;(tap :hat_1 [7/4 9/4 23/4 25/4] 8 :amp 0.2)
+       ;(tap :hat_2 (range 1/2 8 1) 8)
+       ;(tap :hat_2 [1/4 (+ 4 1/4)] 8 :amp 0.4)
        (tap :hat_3 (range 1/2 8 1) 8)
-       (tap :hat_4 [0 2 5/2 3 7/2 4 6 13/2 7 15/2] 8)
+       ;(tap :  hat_4 [0 2 5/2 3 7/2 4 6 13/2 7 15/2] 8)
        ])
     (all :part :beat)))
 
@@ -160,34 +195,26 @@
        (tap :snare [1 3 5 7] 8)
        ;(tap :hat (range 1/2 8) 8)
        ;(tap :shaker [1/4 6/4 7/4 9/4 17/4 18/4 22/4 25/4 26/4 27/4] 8 :amp 0.3)
-       (tap :tambourine (range 0 8 1/2) 8 :amp 1)
-       (tap :tambourine (range 1/4 8 1/2) 8 :amp 0.4)
+       ;(tap :tambourine (range 0 8 1/2) 8 :amp 1)
+       ;(tap :tambourine (range 1/4 8 1/2) 8 :amp 0.4)
        ;(tap :technologic [0] 8)
        ])
     (all :part :beat)))
 
-;(def raw-track
-;  (->>
-;    []
-;    ;(times 2 house-beat-1)
-;    ;(times 1 garage-beat-1)
-;    ;(with (times 1 beat-0))
-;    ;(with (times 2 b2))
-;    ;(with (times 1 b3))
-;    ;(with (times 1 b4))
-;    ;(with (times 1 b5))
-;    ;(with (times 1 b6))
-;    ;(with (times 1 face-bass))
-;    ;(with (times 1 face-glide))
-;    ;(with (times 1 pretend-bass))
-;    ;(with (times 1 random-bass))
-;    ;(with (times 1 s))
-;    ;(with (times 2 s1))
-;    ))
+(def sampler
+  (->> (concat [
+                {:time 0 :sample :atw-bass}
+                ;{:time 0 :sample :phoenix}
+                ;{:time 4 :sample :robot-drive}
+                ]
+               )
+       (all :part :sampler)
+       (all :duration 0)))
 
-(def raw-track
-  {:bass (times 1 face-glide)
-   :beat (times 2 garage-beat-1)})
+(def initial-track {:beat (times 2 house-beat-1)
+                    :bass (times 1 b6)})
+
+(def raw-track (ref initial-track))
 
 (defn track [raw-track]
   (->> raw-track
@@ -199,7 +226,6 @@
 
 (comment
   (o/volume 1)
-  (apply (-> :hat kit :sound) [:amp 0.5])
-  (apply (-> :kick kit :sound) [:amp 0.5])
-  (live/play (track raw-track))
+  (apply (-> kit deref :kick :sound) [:amp 0.5])
+  (live/play (track @raw-track))
   (live/stop))

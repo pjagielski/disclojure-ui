@@ -65,3 +65,8 @@ table.seq td.t {
 .play-controls {
     margin-top: 20px;
 }
+
+.track-container {
+    overflow-y: scroll;
+    height: 400px;
+}

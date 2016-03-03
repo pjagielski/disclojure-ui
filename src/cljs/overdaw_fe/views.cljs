@@ -3,7 +3,8 @@
   (:require [re-frame.core :as re-frame]
             [clojure.set :refer [union]]
             [clojure.string :as s]
-            [overdaw-fe.config :refer [res semitones]]))
+            [overdaw-fe.config :refer [res semitones]]
+            [shodan.console :include-macros true]))
 
 (defn map-note [[idx result] {:keys [time duration amp]}]
   (let [time-idx (/ time res)
@@ -96,6 +97,18 @@
                              :on-click #(re-frame/dispatch [:edit-beat [instr t has-note?]])}
                         "-"]))))))))])))
 
+(defn slider [key min max step controls]
+  (let [instr (reaction (get @controls :instr))]
+    (fn []
+      [:input.track-control
+       {:type      "range"
+        :min       min
+        :max       max
+        :step      step
+        :value     (get-in @controls [@instr key])
+        :on-change (fn [e] (re-frame/dispatch [:change-instr-control
+                                               [@instr key (js/Number (-> e .-target .-value))]]))}])))
+
 (defn step-control [key pred f t controls]
   (fn []
     (let [val (get @controls key)]
@@ -122,12 +135,14 @@
 
 (defn track-control-panel []
   (let [controls (re-frame/subscribe [:track-controls])
-        instruments (re-frame/subscribe [:instruments])]
+        instruments (re-frame/subscribe [:instruments])
+        instr (reaction (:instr @controls))]
     (fn []
       [:div.track-controls.form-inline
        [update-control-panel :from 24 72 1 controls]
-       [update-control-panel :duration 0.25 4 0.25 controls]
-       [track-control :instr #(deref instruments) controls identity]])))
+       [update-control-panel :duration 0.25 4.25 0.25 controls]
+       [track-control :instr #(deref instruments) controls identity]
+       [slider :cutoff 100 5000 50 controls]])))
 
 (defn control-button [name event]
   [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])

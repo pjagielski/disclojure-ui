@@ -2,7 +2,6 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [re-frame.core :as re-frame]
             [plumbing.core :refer [map-vals map-keys]]
-            [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
             [ajax.core :refer [GET POST PUT]]
             [overdaw-fe.db :as db]
@@ -88,6 +87,13 @@
   :change-track-control
   (fn [db [_ [name value]]]
     (assoc-in db [:track-controls name] value)))
+
+(re-frame/register-handler
+  :change-instr-control
+  (fn [db [_ [instr control value]]]
+    (PUT (str c/api-base "/controls")
+          {:params {:instr instr :control control :value value} :format :json})
+    (assoc-in db [:track-controls instr control] value)))
 
 (re-frame/register-handler
   :play-note

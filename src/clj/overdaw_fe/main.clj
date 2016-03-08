@@ -4,7 +4,7 @@
             [overdaw-fe.system :refer [new-system]]))
 
 (def config
-  {:http {:port 3000}, :dev-mode? false})
+  {:http {:port 3005}, :dev-mode? false})
 
 (defn -main [& args]
   (let [system (new-system config)]

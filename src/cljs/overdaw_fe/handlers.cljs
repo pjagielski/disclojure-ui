@@ -84,22 +84,29 @@
     db))
 
 (re-frame/register-handler
-  :change-track-control
+  :change-control
   (fn [db [_ [name value]]]
-    (assoc-in db [:track-controls name] value)))
+    (assoc-in db [:controls name] value)))
+
+(re-frame/register-handler
+  :change-editor-control
+  (fn [db [_ [name value]]]
+    (assoc-in db [:editor name] value)))
 
 (re-frame/register-handler
   :change-instr-control
   (fn [db [_ [instr control value]]]
-    (PUT (str c/api-base "/controls")
-          {:params {:instr instr :control control :value value} :format :json})
-    (assoc-in db [:track-controls instr control] value)))
+    (go
+      (PUT (str c/api-base "/controls")
+           {:params {:instr instr :control control :value value} :format :json}))
+    (assoc-in db [:instr-controls instr control] value)))
 
 (re-frame/register-handler
   :play-note
   (fn [db [_ note]]
-    (POST (str c/api-base "/instruments/play")
-          {:params note :format :json})
+    (let [params (assoc note :duration (db/duration db))]
+      (POST (str c/api-base "/instruments/play")
+            {:params params :format :json}))
     db))
 
 (re-frame/register-handler
@@ -128,9 +135,8 @@
   :edit-track
   (fn [db [_ [instr t-idx note has-note?]]]
     (let [path [:track instr note] curr-pattern (get-in db path [])
-          time (* t-idx res) const (:track-controls db)
-          new-entry (merge (select-keys const [:duration :amp])
-                           {:time time :pitch note :part instr})]
+          time (* t-idx res) const (db/editor db)
+          new-entry (merge const {:time time :pitch note :part instr})]
       (PUT (str c/api-base "/track")
            {:params (merge new-entry {:type (if has-note? :remove :add)})
             :format :json})

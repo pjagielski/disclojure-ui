@@ -12,7 +12,7 @@
 (re-frame/register-sub
   :track-part
   (fn [db [_]]
-    (let [instr (reaction (get-in @db [:track-controls :instr]))]
+    (let [instr (reaction (get-in @db [:controls :instr]))]
       (reaction (-> (:track @db) (get @instr))))))
 
 (re-frame/register-sub
@@ -36,5 +36,21 @@
   (fn [db] (reaction (:instruments @db))))
 
 (re-frame/register-sub
-  :track-controls
-  (fn [db] (reaction (:track-controls @db))))
+  :instr-controls
+  (fn [db] (reaction (:instr-controls @db))))
+
+(re-frame/register-sub
+  :controls
+  (fn [db] (reaction (:controls @db))))
+
+(re-frame/register-sub
+  :configs
+  (fn [db] (reaction (:configs @db))))
+
+(re-frame/register-sub
+  :editor
+  (fn [db] (reaction (:editor @db))))
+
+(re-frame/register-sub
+  :instr
+  (fn [db] (reaction (:instr @db))))

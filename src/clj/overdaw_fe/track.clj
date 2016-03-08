@@ -157,33 +157,36 @@
        (wherever :pitch, :pitch (scale/from (o/note :C4)))
        (all :part :strings)))
 
-(def beat-1
-  (->>
-    (reduce with
-            [(tap :snare1 [2 6] 8)
-             (tap :snare2 [2 6] 8)
-             (tap :hat (range 3 8 4) 8)
-             (tap :kick  [0 4 7] 8)])
-    (all :part :beat)))
+(def phantoms
+  (->> (phrase (concat (take 20 (repeat 3/4)) [1/2 1/4])
+               (concat [5 12 3 10]
+                       (take 16 (cycle [0 5 0 8]))
+                       [0 3]))
+       (wherever :pitch, :pitch (scale/from (o/note :C5)))
+       (all :amp 0.4)
+       (all :part :supersaw)))
 
-(def beat-0
-  (->>
-    (reduce with [(tap :kick [0] 8)])
-    (all :part :beat)))
+(def the-one
+  (->> (phrase [1/2 1/2 1/2 1/4 1/2 1/4 1/2 1/4 1/2 1/4 1/2 1/2 1/2 1/2 1/2 1/4 1/2 1/4 1/2]
+               [-1 -1 -1 nil 3 nil 3 nil 3 nil 3 nil 3 nil 5 nil 5 nil 5])
+       (wherever :pitch, :pitch (scale/from (o/note :C2)))
+       (all :amp 1)
+       (all :part :plucky)))
 
 (def house-beat-1
   (->>
     (reduce with
-      [(tap :kick (range 8) 8)
+      [
+       (tap :kick (range 8) 8)
        ;(tap :snare1 [(+ 4 7/4)] 8 :amp 1.5)
        ;(tap :snare2 [9/4] 8 :amp 0.7)
-       (tap :claps   (range 1 8 2) 8)
+       ;(tap :claps (range 1 8 2) 8)
        ;(tap :hat_1 (range 1/2 8 1) 8)
        ;(tap :hat_1 [7/4 9/4 23/4 25/4] 8 :amp 0.2)
        ;(tap :hat_2 (range 1/2 8 1) 8)
        ;(tap :hat_2 [1/4 (+ 4 1/4)] 8 :amp 0.4)
-       (tap :hat_3 (range 1/2 8 1) 8)
-       ;(tap :  hat_4 [0 2 5/2 3 7/2 4 6 13/2 7 15/2] 8)
+       ;(tap :hat_3 (range 1/2 8 1) 8)
+       ;(tap :hat_4 [0 2 5/2 3 7/2 4 6 13/2 7 15/2] 8)
        ])
     (all :part :beat)))
 
@@ -193,28 +196,37 @@
       [(tap (keyword "808 Kick") [0] 8)
        (tap :kick [0 11/4 14/4 6 27/4 30/4] 8)
        (tap :snare [1 3 5 7] 8)
-       ;(tap :hat (range 1/2 8) 8)
-       ;(tap :shaker [1/4 6/4 7/4 9/4 17/4 18/4 22/4 25/4 26/4 27/4] 8 :amp 0.3)
-       ;(tap :tambourine (range 0 8 1/2) 8 :amp 1)
-       ;(tap :tambourine (range 1/4 8 1/2) 8 :amp 0.4)
-       ;(tap :technologic [0] 8)
+       (tap :hat (range 1/2 8) 8)
+       (tap :shaker [1/4 6/4 7/4 9/4 17/4 18/4 22/4 25/4 26/4 27/4] 8 :amp 0.3)
+       (tap :tambourine (range 0 8 1/2) 8 :amp 1)
+       (tap :tambourine (range 1/4 8 1/2) 8 :amp 0.4)
+       (tap :technologic [0] 8)
        ])
     (all :part :beat)))
 
 (def sampler
   (->> (concat [
-                {:time 0 :sample :atw-bass}
-                ;{:time 0 :sample :phoenix}
+                ;{:time 0 :sample :atw-bass}
                 ;{:time 4 :sample :robot-drive}
-                ]
-               )
+                {:time 0 :sample :the-one}
+                ])
        (all :part :sampler)
        (all :duration 0)))
 
-(def initial-track {:beat (times 2 house-beat-1)
-                    :bass (times 1 b6)})
+(def initial-track {
+                    :beat   (times 2 house-beat-1)
+                    ;:plucky    the-one
+                    ;:supersaw (->> (times 2 s1)
+                    ;               (with (times 2 s)))
+                    ;:supersaw (->> phantoms (all :part :supersaw))
+                    ;:plucky (->> phantoms
+                    ;             (all :part :plucky)
+                    ;             (with (times 2 the-one))
+                    ;             )
+                    ;:sampler  sampler
+                    })
 
-(def raw-track (ref initial-track))
+(defonce raw-track (ref initial-track))
 
 (defn track [raw-track]
   (->> raw-track
@@ -226,6 +238,7 @@
 
 (comment
   (o/volume 1)
+  (dosync (ref-set raw-track initial-track))
   (apply (-> kit deref :kick :sound) [:amp 0.5])
-  (live/play (track @raw-track))
+  (live/play (track initial-track))
   (live/stop))

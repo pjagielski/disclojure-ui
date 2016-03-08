@@ -8,5 +8,4 @@
 
 (def api-base "/api")
 
-(def semitones 22)
 (def res 0.25)

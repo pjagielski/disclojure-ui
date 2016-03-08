@@ -3,7 +3,7 @@
   (:require [re-frame.core :as re-frame]
             [clojure.set :refer [union]]
             [clojure.string :as s]
-            [overdaw-fe.config :refer [res semitones]]
+            [overdaw-fe.config :refer [res]]
             [shodan.console :include-macros true]))
 
 (defn map-note [[idx result] {:keys [time duration amp]}]
@@ -32,117 +32,111 @@
 (defn ticks [bars]
   (* 8 bars))
 
-(defn time-panel []
-  (let [controls (re-frame/subscribe [:track-controls])]
-    (fn []
-      [:table.seq
-       [:thead
-        (into [:tr]
-          (cons [:th {:class "key"} "x"]
-            (for [x (range (ticks (get @controls :bars)))]
-              [:td {:class (when (sep? x) "t")} x])))]])))
-
-
 (defn track-panel []
-  (let [controls (re-frame/subscribe [:track-controls])
+  (let [configs (re-frame/subscribe [:configs])
+        controls (re-frame/subscribe [:controls])
         part (re-frame/subscribe [:track-part])
         note-names (re-frame/subscribe [:notes])
         cursor-pos (reagent.core/atom {})]
     (fn []
-      (let [from (:from @controls) instr (:instr @controls)]
-        [:table.seq
-         (into ^{:key (str instr "-tbody")} [:tbody]
-           (conj
-             (for [y (reverse (range from (+ from semitones)))]
-               (let [mapping (map-row (get @part y) (ticks (get @controls :bars)))
-                     note (get @note-names (str y))
-                     duration (get @controls :duration)]
-                 (into
-                   ^{:key y} [:tr]
-                   (cons
-                     [:td.key {:on-click #(re-frame/dispatch [:play-note {:instr instr :duration duration :note y}])}
-                      (str y "/" note)]
-                     (for [[from to has-note? amp] mapping]
-                       (doall
-                         (for [t (range from to)]
-                           ^{:key (str t y)}
-                           [:td {:class    (s/join " " [(when has-note? "x") (amp->class amp)
-                                                        (when (would-have-note y t cursor-pos duration) "p")
-                                                        (when (sep? t) "t")])
-                                 :on-click #(re-frame/dispatch [:edit-track [instr t y has-note?]])
-                                 :on-mouse-enter #(reset! cursor-pos {:note y :time t})
-                                 :on-mouse-leave #(reset! cursor-pos {})}
-                            (if has-note? (when (= t from) note) "-")])))))))))]))))
+      [:div.track-container
+       (let [{:keys [from to bars]} @configs
+             {:keys [instr]} @controls]
+         [:table.seq
+          (into ^{:key (str instr "-tbody")} [:tbody]
+            (conj
+              (for [y (reverse (range from to))]
+                (let [mapping (map-row (get @part y) (ticks bars))
+                      note (get @note-names (str y))]
+                  (into
+                    ^{:key y} [:tr]
+                    (cons
+                      [:td.key {:on-click #(re-frame/dispatch [:play-note {:instr instr :note y}])}
+                       note]
+                      (for [[from to has-note? amp] mapping]
+                        (doall
+                          (for [t (range from to)]
+                            ^{:key (str t y)}
+                            [:td {:class          (s/join " " [(when has-note? "x") (amp->class amp)
+                                                               ;(when (would-have-note y t cursor-pos duration) "p")
+                                                               (when (sep? t) "t")])
+                                  :on-click       #(re-frame/dispatch [:edit-track [instr t y has-note?]])
+                                  :on-mouse-enter #(reset! cursor-pos {:note y :time t})
+                                  :on-mouse-leave #(reset! cursor-pos {})}
+                             (if has-note? (when (= t from) note) "-")])))))))))])])))
 
 (defn beat-panel []
   (let [beat (re-frame/subscribe [:beat])
         kit (re-frame/subscribe [:kit])
-        controls (re-frame/subscribe [:track-controls])]
+        configs (re-frame/subscribe [:configs])]
     (fn []
-      [:table.seq
-       (into ^{:key "beat-tbody"} [:tbody]
-         (for [instr (keys @kit)]
-           (let [mapping (map-row (get @beat instr) (ticks (get @controls :bars)))]
-             (into
-               ^{:key instr} [:tr]
-               (cons
-                 [:td.key {:on-click #(re-frame/dispatch [:play-kit instr])}
-                  instr]
-                 (for [[from to has-note? amp] mapping]
-                   (doall
-                     (for [t (range from to)]
-                       ^{:key (str t instr)}
-                       [:td {:class    (s/join " " [(when has-note? "x") (amp->class amp)
-                                                    (when (sep? t) "t")])
-                             :on-click #(re-frame/dispatch [:edit-beat [instr t has-note?]])}
-                        "-"]))))))))])))
+      [:div.beat-container
+       [:table.seq
+        (into ^{:key "beat-tbody"} [:tbody]
+          (for [instr (keys @kit)]
+            (let [mapping (map-row (get @beat instr) (ticks (get @configs :bars)))]
+              (into
+                ^{:key instr} [:tr]
+                (cons
+                  [:td.key {:on-click #(re-frame/dispatch [:play-kit instr])}
+                   instr]
+                  (for [[from to has-note? amp] mapping]
+                    (doall
+                      (for [t (range from to)]
+                        ^{:key (str t instr)}
+                        [:td {:class    (s/join " " [(when has-note? "x") (amp->class amp)
+                                                     (when (sep? t) "t")])
+                              :on-click #(re-frame/dispatch [:edit-beat [instr t has-note?]])}
+                         "-"]))))))))]])))
 
-(defn slider [key min max step controls]
-  (let [instr (reaction (get @controls :instr))]
+(defn slider [key min max step]
+  (let [instr-controls (re-frame/subscribe [:instr-controls])
+        controls (re-frame/subscribe [:controls])]
     (fn []
-      [:input.track-control
-       {:type      "range"
-        :min       min
-        :max       max
-        :step      step
-        :value     (get-in @controls [@instr key])
-        :on-change (fn [e] (re-frame/dispatch [:change-instr-control
-                                               [@instr key (js/Number (-> e .-target .-value))]]))}])))
+      (let [instr (:instr @controls)]
+        [:input.track-control
+         {:type      "range"
+          :min       min
+          :max       max
+          :step      step
+          :value     (get-in @instr-controls [instr key])
+          :on-change (fn [e] (re-frame/dispatch [:change-instr-control
+                                                 [instr key (js/Number (-> e .-target .-value))]]))}]))))
 
-(defn step-control [key pred f t controls]
+(defn step-control [key pred f t controls event-key]
   (fn []
     (let [val (get @controls key)]
       [:button.btn
        {:on-click #(when (pred val)
-                    (re-frame/dispatch [:change-track-control [key (f val)]]))}
+                    (re-frame/dispatch [event-key [key (f val)]]))}
        t])))
 
-(defn track-control [key values-fn controls f]
+(defn select [key values-fn data event-key f]
   (fn []
     (into [:select.form-control.track-control
-           {:name      (str key) :value (get @controls key)
-            :on-change (fn [e] (re-frame/dispatch [:change-track-control
+           {:name      (str key) :value (get @data key)
+            :on-change (fn [e] (re-frame/dispatch [event-key
                                                    [key (f (.. e -target -value))]]))}]
           (map (fn [x] [:option {:value x} x]) (values-fn)))))
 
-(defn update-control-panel [key start end step controls]
+(defn step-select [key start end step controls event-key]
   (fn []
-    [:div.row
-     [:div.col-md-12
-      [step-control key #(> % start) #(- % step) "v" controls]
-      [track-control key #(range start end step) controls js/Number]
-      [step-control key #(< % end) #(+ % step) "^" controls]]]))
+    [:div.update-control.form-inline
+     [step-control key #(> % start) #(- % step) "-" controls event-key]
+     [select key #(range start end step) controls event-key js/Number]
+     [step-control key #(< % end) #(+ % step) "+" controls event-key]]))
 
 (defn track-control-panel []
-  (let [controls (re-frame/subscribe [:track-controls])
-        instruments (re-frame/subscribe [:instruments])
-        instr (reaction (:instr @controls))]
+  (let [instr-controls (re-frame/subscribe [:instr-controls])
+        controls (re-frame/subscribe [:controls])
+        editor (re-frame/subscribe [:editor])
+        instruments (re-frame/subscribe [:instruments])]
     (fn []
-      [:div.track-controls.form-inline
-       [update-control-panel :from 24 72 1 controls]
-       [update-control-panel :duration 0.25 4.25 0.25 controls]
-       [track-control :instr #(deref instruments) controls identity]
-       [slider :cutoff 100 5000 50 controls]])))
+      [:div.track-controls.form
+       [step-select :duration 0.25 4.25 0.25 editor :change-editor-control]
+       [select :panel (constantly ["track" "beat"]) controls :change-control identity]
+       [select :instr #(deref instruments) controls :change-control identity]
+       [slider :cutoff 100 5000 50 instr-controls]])))
 
 (defn control-button [name event]
   [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])
@@ -155,20 +149,17 @@
      [control-button "sync" :sync-track]]))
 
 (defn main-panel []
-  (fn []
-    [:div.main
-     [:div.row
-      [:h2 "OverDAW"]]
-     [:div.row
-      [:div.col-md-7
-       [:div.seq-container
-        [time-panel]
-        [:hr]
-        [track-panel]
-        [:hr]
-        [beat-panel]
-        [:hr]]]
-      [:div.col-md-5
-       [track-control-panel]]]
-     [:div.row.play-controls
-      [play-control-panel]]]))
+  (let [controls (re-frame/subscribe [:controls])]
+    (fn []
+      [:div.main.row
+       [:div.col-md-12
+        [:h2 "OverDAW"]]
+       [:div.col-md-12.play-controls
+        [play-control-panel]]
+       [:div
+        [:div.col-md-9
+         (condp = (:panel @controls)
+           "track" [track-panel]
+           "beat" [beat-panel])]
+        [:div.col-md-3
+         [track-control-panel]]]])))

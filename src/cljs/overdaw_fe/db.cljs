@@ -1,7 +1,16 @@
 (ns overdaw-fe.db)
 
 (def default-db
-  {:track-controls {:duration 0.25 :amp 1 :from 32 :instr "bass" :bars 8
-                    "bass" {:cutoff 1000}}
-   :instruments [] :kit []
-   :beat-controls {:amp 1}})
+  {:configs {:from 24 :to 96 :bars 8}
+   :controls {:panel "track" :instr "bass"}
+   :instr-controls {"bass" {:cutoff 1000}}
+   :beat-controls {:amp 1}
+   :editor {:duration 0.25 :amp 1}
+   :instruments []
+   :kit []})
+
+(defn duration [db]
+  (get-in db [:editor :duration]))
+
+(defn editor [db]
+  (get db :editor))

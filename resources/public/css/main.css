@@ -50,16 +50,16 @@ table.seq td.t {
     border-left: 2px solid #000000;
 }
 
-.seq-container {
-    overflow-x: scroll;
+.play-controls {
+    margin-bottom: 20px;
 }
 
-.seq-container hr {
-    border: none;
-}
+.update-control .track-control {
+    width: 20% !important;
 
+}
 .track-control {
-    width: 80px !important;
+    width: 30% !important;
 }
 
 .play-controls {
@@ -67,6 +67,10 @@ table.seq td.t {
 }
 
 .track-container {
-    overflow-y: scroll;
-    height: 400px;
+    overflow: scroll;
+    height: 800px;
+}
+
+.beat-container {
+    overflow-x: scroll;
 }

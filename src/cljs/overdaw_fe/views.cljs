@@ -3,8 +3,10 @@
   (:require [re-frame.core :as re-frame]
             [clojure.set :refer [union]]
             [clojure.string :as s]
+            [clojure.data :as d]
             [overdaw-fe.config :refer [res]]
-            [shodan.console :include-macros true]))
+            [shodan.console :include-macros true]
+            [reagent.core :as reagent]))
 
 (defn map-note [[idx result] {:keys [time duration amp]}]
   (let [time-idx (/ time res)
@@ -32,38 +34,50 @@
 (defn ticks [bars]
   (* 8 bars))
 
+(defn track-row [instr y bars duration]
+  (let [part (re-frame/subscribe [:track-part instr y])
+        note-names (re-frame/subscribe [:notes])
+        cursor-pos (reagent.core/atom {})]
+    (reagent/create-class
+      {:should-component-update
+       (fn [_ _ _] false)
+       :reagent-render
+       (fn [instr y bars duration]
+         (let [mapping (map-row @part (ticks bars))
+               note (get @note-names (str y))]
+           (into
+             ^{:key y} [:tr]
+             (cons
+               [:td.key {:on-click #(re-frame/dispatch [:play-note {:instr instr :note y}])}
+                note]
+               (for [[from to has-note? amp] mapping]
+                 (doall
+                   (for [t (range from to)]
+                     ^{:key (str t y)}
+                     [:td {:class          (s/join " " [(when has-note? "x") (amp->class amp)
+                                                        (when (would-have-note y t cursor-pos duration) "p")
+                                                        (when (sep? t) "t")])
+                           :on-click       #(re-frame/dispatch [:edit-track [instr t y has-note?]])
+                           :on-mouse-enter #(reset! cursor-pos {:note y :time t})
+                           :on-mouse-leave #(reset! cursor-pos {})}
+                      (if has-note? (when (= t from) note) "-")])))))))})))
+
 (defn track-panel []
   (let [configs (re-frame/subscribe [:configs])
         controls (re-frame/subscribe [:controls])
-        part (re-frame/subscribe [:track-part])
-        note-names (re-frame/subscribe [:notes])
-        cursor-pos (reagent.core/atom {})]
+        editor (re-frame/subscribe [:editor])]
     (fn []
-      [:div.track-container
-       (let [{:keys [from to bars]} @configs
-             {:keys [instr]} @controls]
-         [:table.seq
-          (into ^{:key (str instr "-tbody")} [:tbody]
-            (conj
-              (for [y (reverse (range from to))]
-                (let [mapping (map-row (get @part y) (ticks bars))
-                      note (get @note-names (str y))]
-                  (into
-                    ^{:key y} [:tr]
-                    (cons
-                      [:td.key {:on-click #(re-frame/dispatch [:play-note {:instr instr :note y}])}
-                       note]
-                      (for [[from to has-note? amp] mapping]
-                        (doall
-                          (for [t (range from to)]
-                            ^{:key (str t y)}
-                            [:td {:class          (s/join " " [(when has-note? "x") (amp->class amp)
-                                                               ;(when (would-have-note y t cursor-pos duration) "p")
-                                                               (when (sep? t) "t")])
-                                  :on-click       #(re-frame/dispatch [:edit-track [instr t y has-note?]])
-                                  :on-mouse-enter #(reset! cursor-pos {:note y :time t})
-                                  :on-mouse-leave #(reset! cursor-pos {})}
-                             (if has-note? (when (= t from) note) "-")])))))))))])])))
+      (println @editor @controls)
+      (time
+        [:div.track-container
+         (let [{:keys [from to bars]} @configs
+               {:keys [instr]} @controls
+               {:keys [duration]} @editor]
+           [:table.seq
+            (into ^{:key (str instr "-tbody")} [:tbody]
+              (conj
+                (for [y (reverse (range from to))]
+                  [track-row instr y bars duration])))])]))))
 
 (defn beat-panel []
   (let [beat (re-frame/subscribe [:beat])
@@ -111,19 +125,18 @@
                     (re-frame/dispatch [event-key [key (f val)]]))}
        t])))
 
-(defn select [key values-fn data event-key f]
-  (fn []
-    (into [:select.form-control.track-control
-           {:name      (str key) :value (get @data key)
-            :on-change (fn [e] (re-frame/dispatch [event-key
-                                                   [key (f (.. e -target -value))]]))}]
-          (map (fn [x] [:option {:value x} x]) (values-fn)))))
+(defn select [key values data event-key f]
+  (into [:select.form-control.track-control
+         {:name      (str key) :value (get @data key)
+          :on-change (fn [e] (re-frame/dispatch [event-key
+                                                 [key (f (.. e -target -value))]]))}]
+        (map (fn [x] [:option {:value x} x]) values)))
 
 (defn step-select [key start end step controls event-key]
   (fn []
     [:div.update-control.form-inline
      [step-control key #(> % start) #(- % step) "-" controls event-key]
-     [select key #(range start end step) controls event-key js/Number]
+     [select key (range start end step) controls event-key js/Number]
      [step-control key #(< % end) #(+ % step) "+" controls event-key]]))
 
 (defn track-control-panel []
@@ -134,8 +147,8 @@
     (fn []
       [:div.track-controls.form
        [step-select :duration 0.25 4.25 0.25 editor :change-editor-control]
-       [select :panel (constantly ["track" "beat"]) controls :change-control identity]
-       [select :instr #(deref instruments) controls :change-control identity]
+       [select :panel ["track" "beat"] controls :change-control identity]
+       [select :instr @instruments controls :change-control identity]
        [slider :cutoff 100 5000 50 instr-controls]])))
 
 (defn control-button [name event]

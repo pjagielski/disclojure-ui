@@ -137,9 +137,10 @@
     (let [path [:track instr note] curr-pattern (get-in db path [])
           time (* t-idx res) const (db/editor db)
           new-entry (merge const {:time time :pitch note :part instr})]
-      (PUT (str c/api-base "/track")
-           {:params (merge new-entry {:type (if has-note? :remove :add)})
-            :format :json})
+      (go
+        (PUT (str c/api-base "/track")
+             {:params (merge new-entry {:type (if has-note? :remove :add)})
+              :format :json}))
       (->> (if has-note?
              (remove #(and (= time (:time %)) (= note (:pitch %))) curr-pattern)
              (conj curr-pattern new-entry))

@@ -11,9 +11,8 @@
 
 (re-frame/register-sub
   :track-part
-  (fn [db [_]]
-    (let [instr (reaction (get-in @db [:controls :instr]))]
-      (reaction (-> (:track @db) (get @instr))))))
+  (fn [db [_ instr pitch]]
+    (reaction (-> (:track @db) (get instr) (get pitch)))))
 
 (re-frame/register-sub
   :beat

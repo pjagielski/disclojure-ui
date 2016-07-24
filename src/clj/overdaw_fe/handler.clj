@@ -1,15 +1,15 @@
 (ns overdaw-fe.handler
   (:require [clojure.java.io :as io]
             [plumbing.core :as p]
-            [compojure.core :refer [routes context GET]]
+            [compojure.core :as c]
             [compojure.route :as route]
-            [compojure.api.sweet :refer [api context* defroutes* swagger-ui swagger-docs GET* POST* PUT*]]
+            [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer [ok]]
+            [disclojure.live :as dl :refer [assoc-track]]
             [overdaw-fe.track :as t]
             [overdaw-fe.model :as m]
             [overdaw-fe.runtime :as r]
             [overdaw-fe.play :as pl]
-            [overdaw-fe.live :as l]
             [overtone.live :as o]
             [leipzig.live :as live]))
 
@@ -28,73 +28,59 @@
       (remove #(and (= (double time) (double (:time %))) (= pitch (:pitch %))) current))
     (sort-by :time)))
 
-(defn all-but-part [by-part part]
-  (-> by-part
-      (select-keys (remove (partial = part) (keys by-part)))
-      vals
-      flatten))
-
-(defn reset-track [track-ref raw-track-ref new-track]
-  (ref-set raw-track-ref new-track)
-  (ref-set track-ref (t/track new-track)))
-
-(p/defnk create [[:state track raw-track kit controls]]
+(p/defnk create [[:state raw-track kit controls]]
   (routes
     (route/resources "/")
-    (GET "/" []
+    (c/GET "/" []
       (io/resource "public/index.html"))
     (context "/api" []
       (api
-        (swagger-ui "/swagger"
-                    :swagger-docs "/api/swagger.json")
-        (swagger-docs "/swagger.json"
-                      {:info {:title "OverDAW api"} :basePath "/api"})
+        {:swagger    {:ui "/swagget" :spec "/swagger.json"}}
         (context "/track" []
-          (GET* "/" [] (ok @raw-track))
-          (POST* "/play" [] (live/jam track) (ok))
-          (POST* "/stop" [] (live/stop) (ok))
-          (PUT* "/" []
+          (GET "/" [] (ok @raw-track))
+          (POST "/play" [] (live/jam (dl/track)) (ok))
+          (POST "/stop" [] (live/stop) (ok))
+          (PUT "/" []
                 :body [body m/TrackMutation]
-                (dosync
-                  (let [part (keyword (:part body))]
-                    (as->
-                      (get @raw-track part) $
-                      (mutate-track! $ body part (m/add? body))
-                      (l/alter-raw-track raw-track part $)))
-                  (l/commit-track raw-track track)
-                  (ok))))
+                (let [part (keyword (:part body))]
+                  (as->
+                    (get @raw-track part) $
+                    (mutate-track! $ body part (m/add? body))
+                    (assoc-track part $)))
+                (ok)))
         (context "/instruments" []
-          (GET* "/" []
-                (ok (r/find-instruments (symbol "overdaw-fe.inst"))))
-          (POST* "/play" []
+          (GET "/" []
+                (->
+                  (symbol "overdaw-fe.inst")
+                  (r/find-instruments)
+                  (ok)))
+          (POST "/play" []
                  :body [body m/PlayNote]
                  (pl/play (keyword (:instr body)) body)
                  (ok)))
-        (GET* "/notes/:from/:to" []
+        (GET "/notes/:from/:to" []
               :path-params [from :- Long, to :- Long]
               (->> (range from to)
                    (map (fn [x] {x (o/find-note-name x)}))
                    (into {})
                    ok))
         (context "/kit" []
-          (GET* "/" []
+          (GET "/" []
                 (ok (p/map-vals #(select-keys % [:amp]) @kit)))
-          (POST* "/play" []
+          (POST "/play" []
                  :body [body m/PlayBeat]
                  (apply (-> (get @kit (keyword (:drum body))) :sound) [])
                  (ok)))
         (context "/beat" []
-          (PUT* "/" []
+          (PUT "/" []
                 :body [body m/BeatMutation]
-                (dosync
-                  (as->
-                    (get @raw-track :beat) $
-                    (mutate-beat! $ body (keyword (:drum body)) (m/add? body))
-                    (l/alter-raw-track raw-track :beat $))
-                  (l/commit-track raw-track track)
-                  (ok))))
+                (as->
+                  (get @raw-track :beat) $
+                  (mutate-beat! $ body (keyword (:drum body)) (m/add? body))
+                  (assoc-track :beat $))
+                (ok)))
         (context "/controls" []
-          (PUT* "/" []
+          (PUT "/" []
                 :body [body m/ControlChange]
                 (let [instr (keyword (:instr body))
                       control (keyword (:control body))]

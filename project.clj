@@ -5,10 +5,10 @@
                  [com.stuartsierra/component "0.3.0"]
                  [metosin/palikka "0.3.0"]
                  [metosin/kekkonen "0.1.0"]
-                 [overtone "0.9.1"]
-                 [leipzig "0.9.0"]
+
+                 [pjagielski/disclojure "0.1.2-SNAPSHOT"]
                  [compojure "1.4.0"]
-                 [metosin/compojure-api "0.24.4"]
+                 [metosin/compojure-api "1.1.4"]
 
                  [reagent "0.5.1"]
                  [re-frame "0.6.0"]

@@ -14,3 +14,4 @@ dev/local.clj
 npm-debug.log
 figwheel_server.log
 compiled/
+work/

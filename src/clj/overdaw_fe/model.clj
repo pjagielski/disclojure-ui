@@ -1,6 +1,5 @@
 (ns overdaw-fe.model
-  (:require [schema.core :as s])
-  (:import (javafx.scene.control TextInputControl$UndoRedoChange)))
+  (:require [schema.core :as s]))
 
 (s/defschema PlayNote
   {:instr    String

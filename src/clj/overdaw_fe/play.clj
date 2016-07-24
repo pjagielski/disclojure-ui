@@ -1,11 +1,15 @@
 (ns overdaw-fe.play
   (:require [leipzig.live :as live]
             [leipzig.temperament :refer [equal]]
-            [overdaw-fe.inst :as i]))
+            [overdaw-fe.inst :as i]
+            [overtone.live :refer :all]
+            [overtone.inst.synth :refer :all]))
 
-(def controls (atom {:bass {:cutoff 2250}
-                     :supersaw {:cutoff 4000}
-                     :plucky {:amp 0.4}}))
+(def controls (atom {:bass {:cutoff 2250 :amp 1}
+                     :supersaw {:cutoff 4000 :amp 0.5}
+                     :plucky {:amp 1.0 :cutoff 900}
+                     :strings {:cutoff 5000 :amp 0.4}
+                     :da-funk {:cutoff 1450 :boost 10 :dist-level 0.015}}))
 
 (defn to-args [m]
   (mapcat vec m))
@@ -26,7 +30,7 @@
 (defmethod live/play-note :plucky [{hertz :pitch seconds :duration amp :amp}]
   (when hertz
     (let [params {:freq hertz :dur seconds :volume (or amp 1)}]
-      (apply i/plucky (to-args (merge params (:plucky @controls)))))))
+      (apply i/plucky (to-args (merge (:plucky @controls) params))))))
 
 (defmethod live/play-note :bass [{hertz :pitch seconds :duration amp :amp}]
   (when hertz
@@ -50,6 +54,21 @@
   (when hertz
     (i/pad :freq hertz :dur seconds :amp (or amp 1))))
 
+(defmethod live/play-note :strings [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (let [params {:freq hertz :dur seconds :amp (or amp 1)}]
+      (apply i/strings (to-args (merge params (:strings @controls)))))))
+
+(defmethod live/play-note :warp-bass [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (let [params {:freq hertz :dur seconds :amp (or amp 1)}]
+      (apply i/warp-bass (to-args (merge params (:rat-bass @controls)))))))
+
+(defmethod live/play-note :da-funk [{hertz :pitch seconds :duration amp :amp}]
+  (when hertz
+    (let [params {:freq hertz :dur seconds :amp (or amp 1)}]
+      (apply i/da-funk (to-args (merge params (:da-funk @controls)))))))
+
 (comment
   (defmethod live/play-note :talking-bass [{hertz :pitch seconds :duration amp :amp}]
     (when hertz
@@ -58,10 +77,6 @@
   (defmethod live/play-note :g-bass [{hertz :pitch seconds :duration amp :amp}]
     (when hertz
       (i/g-bass :freq hertz :dur seconds :amp (or amp 1))))
-
-  (defmethod live/play-note :strings [{hertz :pitch seconds :duration amp :amp}]
-    (when hertz
-      (i/strings :freq hertz :dur seconds :amp (or amp 1))))
 
   (defmethod live/play-note :dark-bass [{hertz :pitch seconds :duration amp :amp}]
     (when hertz

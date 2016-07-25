@@ -1,6 +1,5 @@
-(ns overdaw-fe.handler
+(ns overdaw-fe.api
   (:require [clojure.java.io :as io]
-            [plumbing.core :as p]
             [compojure.core :as c]
             [compojure.route :as route]
             [compojure.api.sweet :refer :all]
@@ -11,7 +10,8 @@
             [overdaw-fe.runtime :as r]
             [overdaw-fe.play :as pl]
             [overtone.live :as o]
-            [leipzig.live :as live]))
+            [leipzig.live :as live]
+            [plumbing.core :as p]))
 
 ; -> cljc
 (defn mutate-beat! [current {:keys [time duration amp]} drum add?]
@@ -28,7 +28,7 @@
       (remove #(and (= (double time) (double (:time %))) (= pitch (:pitch %))) current))
     (sort-by :time)))
 
-(p/defnk create [[:state raw-track kit controls]]
+(defn api-routes [{{:keys [raw-track kit controls]} :state}]
   (routes
     (route/resources "/")
     (c/GET "/" []
@@ -66,7 +66,7 @@
                    ok))
         (context "/kit" []
           (GET "/" []
-                (ok (p/map-vals #(select-keys % [:amp]) @kit)))
+            (ok (p/map-vals #(select-keys % [:amp]) @kit)))
           (POST "/play" []
                  :body [body m/PlayBeat]
                  (apply (-> (get @kit (keyword (:drum body))) :sound) [])

@@ -55,7 +55,7 @@ table.seq td.t {
 }
 
 .update-control .track-control {
-    width: 20% !important;
+    width: 30% !important;
 
 }
 .track-control {
@@ -72,5 +72,19 @@ table.seq td.t {
 }
 
 .beat-container {
-    /*overflow-x: scroll;*/
+    overflow-x: scroll;
+}
+
+.logo {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.panel {
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.slider {
+    margin-top: 5px;
 }

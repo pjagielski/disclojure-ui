@@ -1,10 +1,14 @@
 (defproject overdaw-fe "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
+                 [org.clojure/core.match "0.3.0-alpha4"]
+
                  [http-kit "2.1.19"]
+                 [com.taoensso/sente "1.8.1"]
+                 [ring/ring-defaults "0.2.0"]
+
                  [com.stuartsierra/component "0.3.0"]
-                 [metosin/palikka "0.3.0"]
-                 [metosin/kekkonen "0.1.0"]
+                 [org.danielsz/system "0.3.0"]
 
                  [pjagielski/disclojure "0.1.2-SNAPSHOT"]
                  [compojure "1.4.0"]

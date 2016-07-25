@@ -27,8 +27,33 @@
 (re-frame/register-handler
   :sync-track-response
   (fn [db [_ track]]
+    (let [result (->> track
+                      (map-keys name)
+                      (map-vals #(group-by :pitch %)))]
+      (println (get result "beat")))
     (->> track
          (map-keys name)
+         (map-vals #(group-by :pitch %))
+         (assoc db :track))))
+
+(defn keywords->names [notes]
+  (->> notes
+       (map (fn [{:keys [drum part] :as n}]
+              (as-> n $
+                    (when drum (assoc $ :drum (name drum)))
+                    (when part (assoc $ :part (name part))))))))
+
+(re-frame/register-handler
+  :push-track
+  (fn [db [_ track]]
+    (let [result (->> track
+                      (map-keys name)
+                      (map-vals keywords->names)
+                      (map-vals #(group-by :pitch %)))]
+      (println (get result "beat")))
+    (->> track
+         (map-keys name)
+         (map-vals keywords->names)
          (map-vals #(group-by :pitch %))
          (assoc db :track))))
 

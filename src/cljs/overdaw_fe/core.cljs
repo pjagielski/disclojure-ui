@@ -3,6 +3,7 @@
               [re-frame.core :as re-frame]
               [overdaw-fe.handlers]
               [overdaw-fe.subs]
+              [overdaw-fe.websocket]
               [overdaw-fe.views :as views]
               [overdaw-fe.config :as config]))
 

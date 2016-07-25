@@ -108,7 +108,7 @@
         controls (re-frame/subscribe [:controls])]
     (fn []
       (let [instr (:instr @controls)]
-        [:input.track-control
+        [:input.slider
          {:type      "range"
           :min       min
           :max       max
@@ -126,7 +126,7 @@
        t])))
 
 (defn select [key values data event-key f]
-  (into [:select.form-control.track-control
+  (into [:select.form-control
          {:name      (str key) :value (get @data key)
           :on-change (fn [e] (re-frame/dispatch [event-key
                                                  [key (f (.. e -target -value))]]))}]
@@ -134,7 +134,7 @@
 
 (defn step-select [key start end step controls event-key]
   (fn []
-    [:div.update-control.form-inline
+    [:div.form-inline
      [step-control key #(> % start) #(- % step) "-" controls event-key]
      [select key (range start end step) controls event-key js/Number]
      [step-control key #(< % end) #(+ % step) "+" controls event-key]]))
@@ -145,11 +145,15 @@
         editor (re-frame/subscribe [:editor])
         instruments (re-frame/subscribe [:instruments])]
     (fn []
-      [:div.track-controls.form
-       [step-select :duration 0.25 4.25 0.25 editor :change-editor-control]
-       [select :panel ["track" "beat"] controls :change-control identity]
-       [select :instr @instruments controls :change-control identity]
-       [slider :cutoff 100 5000 50 instr-controls]])))
+      [:div
+       [:div.col-md-3
+        [step-select :duration 0.25 4.25 0.25 editor :change-editor-control]]
+       [:div.col-md-3
+        [select :panel ["track" "beat"] controls :change-control identity]]
+       [:div.col-md-3
+        [select :instr @instruments controls :change-control identity]]
+       [:div.col-md-3
+        [slider :cutoff 100 5000 50 instr-controls]]])))
 
 (defn control-button [name event]
   [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])
@@ -158,21 +162,23 @@
   (fn []
     [:div.form-inline
      [control-button "play" :play]
-     [control-button "stop" :stop]
-     [control-button "sync" :sync-track]]))
+     [control-button "stop" :stop]]))
 
 (defn main-panel []
   (let [controls (re-frame/subscribe [:controls])]
     (fn []
-      [:div.main.row
-       [:div.col-md-12
-        [:h2 "OverDAW"]]
-       [:div.col-md-12.play-controls
-        [play-control-panel]]
-       [:div
-        [:div.col-md-9
+      [:div.main
+       [:div.row.panel
+        [:div.col-md-2
+         [:h2.logo "Disclo" [:em "j"] "ure UI"]]
+        [:div.col-md-1
+         [play-control-panel]]
+        [:div.col-md-6.form-inline
+         [track-control-panel]]]
+       [:div.row
+        [:div.col-md-11
          (condp = (:panel @controls)
            "track" [track-panel]
            "beat" [beat-panel])]
-        [:div.col-md-3
-         [track-control-panel]]]])))
+        [:div.col-md-3]]]
+      )))

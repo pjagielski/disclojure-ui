@@ -50,7 +50,7 @@
         (context "/instruments" []
           (GET "/" []
                 (->
-                  (symbol "disclojure-ui.inst")
+                  (symbol "disclojure.inst")
                   (r/find-instruments)
                   (ok)))
           (POST "/play" []

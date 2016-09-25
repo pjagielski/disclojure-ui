@@ -1,8 +1,8 @@
-(ns overdaw-fe.subs
+(ns disclojure-ui.subs
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as re-frame]
             [plumbing.core :refer [map-vals]]
-            [overdaw-fe.config :refer [res]]))
+            [disclojure-ui.config :refer [res]]))
 
 (re-frame/register-sub
  :name
@@ -53,3 +53,7 @@
 (re-frame/register-sub
   :instr
   (fn [db] (reaction (:instr @db))))
+
+(re-frame/register-sub
+  :playing
+  (fn [db] (reaction (:playing @db))))

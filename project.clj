@@ -1,4 +1,4 @@
-(defproject overdaw-fe "0.1.0-SNAPSHOT"
+(defproject disclojure-ui "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
                  [org.clojure/core.match "0.3.0-alpha4"]
@@ -10,7 +10,7 @@
                  [com.stuartsierra/component "0.3.0"]
                  [org.danielsz/system "0.3.0"]
 
-                 [pjagielski/disclojure "0.1.2-SNAPSHOT"]
+                 [pjagielski/disclojure "0.1.3"]
                  [compojure "1.4.0"]
                  [metosin/compojure-api "1.1.4"]
 
@@ -32,16 +32,17 @@
                                     "test/js"
                                     "resources/public/css/compiled"]
 
-  :main overdaw-fe.main
+  :main disclojure-ui.main
 
   :garden {:builds [{:id "screen"
                      :source-paths ["src/clj"]
-                     :stylesheet overdaw-fe.css/screen
+                     :stylesheet disclojure-ui.css/screen
                      :compiler {:output-to "resources/public/css/compiled/screen.css"
                                 :pretty-print? true}}]}
 
   :profiles
-  {:dev {:plugins [[lein-figwheel "0.5.0-2"]
+  {:dev {:source-paths ["dev"]
+         :plugins [[lein-figwheel "0.5.0-2"]
                    [lein-doo "0.1.6"]]
          :dependencies [[reloaded.repl "0.2.1"]
                         [figwheel "0.5.0-2"]
@@ -57,8 +58,8 @@
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/cljs"]
-                        :figwheel {:on-jsload "overdaw-fe.core/mount-root"}
-                        :compiler {:main overdaw-fe.core
+                        :figwheel {:on-jsload "disclojure-ui.core/mount-root"}
+                        :compiler {:main disclojure-ui.core
                                    :output-to "resources/public/js/compiled/app.js"
                                    :output-dir "resources/public/js/compiled/out"
                                    :asset-path "js/compiled/out"
@@ -67,12 +68,12 @@
                        {:id "test"
                         :source-paths ["src/cljs" "test/cljs"]
                         :compiler {:output-to "resources/public/js/compiled/test.js"
-                                   :main overdaw-fe.runner
+                                   :main disclojure-ui.runner
                                    :optimizations :none}}
 
                        {:id "min"
                         :source-paths ["src/cljs"]
-                        :compiler {:main overdaw-fe.core
+                        :compiler {:main disclojure-ui.core
                                    :output-to "resources/public/js/compiled/app.js"
                                    :optimizations :advanced
                                    :closure-defines {goog.DEBUG false}

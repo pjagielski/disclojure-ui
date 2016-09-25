@@ -1,4 +1,4 @@
-(ns overdaw-fe.config)
+(ns disclojure-ui.config)
 
 (def debug?
   ^boolean js/goog.DEBUG)

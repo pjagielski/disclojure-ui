@@ -1,4 +1,4 @@
-(ns overdaw-fe.system
+(ns disclojure-ui.system
   (:require [com.stuartsierra.component :as component]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [taoensso.sente.server-adapters.http-kit :refer [http-kit-adapter]]
@@ -12,7 +12,7 @@
               [play :refer [controls]]
               [live :refer [state reset-track]]
               [kit :refer [kit]])
-            (overdaw-fe
+            (disclojure-ui
               [track :refer [initial-track]]
               [api :refer [api-routes]]
               [websocket :refer [websocket-handler new-state-broadcaster]])))

@@ -1,11 +1,11 @@
-(ns overdaw-fe.core
+(ns disclojure-ui.core
     (:require [reagent.core :as reagent]
               [re-frame.core :as re-frame]
-              [overdaw-fe.handlers]
-              [overdaw-fe.subs]
-              [overdaw-fe.websocket]
-              [overdaw-fe.views :as views]
-              [overdaw-fe.config :as config]))
+              [disclojure-ui.handlers]
+              [disclojure-ui.subs]
+              [disclojure-ui.websocket]
+              [disclojure-ui.views :as views]
+              [disclojure-ui.config :as config]))
 
 (when config/debug?
   (println "dev mode"))

@@ -1,6 +1,6 @@
 (ns repl
   (:require [reloaded.repl :refer [system init start stop go reset]]
-            [overdaw-fe.system :as system]
+            [disclojure-ui.system :as system]
             [leipzig.melody :refer :all]))
 
 (def config

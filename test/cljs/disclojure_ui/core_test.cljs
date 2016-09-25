@@ -1,6 +1,6 @@
-(ns overdaw-fe.core-test
+(ns disclojure-ui.core-test
   (:require [cljs.test :refer-macros [deftest testing is]]
-            [overdaw-fe.core :as core]))
+            [disclojure-ui.core :as core]))
 
 (deftest fake-test
   (testing "fake description"

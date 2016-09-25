@@ -1,4 +1,4 @@
-(ns overdaw-fe.db)
+(ns disclojure-ui.db)
 
 (def default-db
   {:configs {:from 24 :to 96 :bars 8}

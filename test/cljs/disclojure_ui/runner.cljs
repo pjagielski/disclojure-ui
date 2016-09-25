@@ -1,5 +1,5 @@
-(ns overdaw-fe.runner
+(ns disclojure-ui.runner
     (:require [doo.runner :refer-macros [doo-tests]]
-              [overdaw-fe.core-test]))
+              [disclojure-ui.core-test]))
 
 (doo-tests 'overdaw-fe.core-test)

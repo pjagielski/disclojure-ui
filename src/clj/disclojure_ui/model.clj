@@ -1,4 +1,4 @@
-(ns overdaw-fe.model
+(ns disclojure-ui.model
   (:require [schema.core :as s]))
 
 (s/defschema PlayNote

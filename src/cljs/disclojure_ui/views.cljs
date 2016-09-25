@@ -1,10 +1,10 @@
-(ns overdaw-fe.views
+(ns disclojure-ui.views
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as re-frame]
             [clojure.set :refer [union]]
             [clojure.string :as s]
             [clojure.data :as d]
-            [overdaw-fe.config :refer [res]]
+            [disclojure-ui.config :refer [res]]
             [shodan.console :include-macros true]
             [reagent.core :as reagent]))
 
@@ -88,7 +88,7 @@
        [:table.seq
         (into ^{:key "beat-tbody"} [:tbody]
           (for [instr (keys @kit)]
-            (let [mapping (map-row (get @beat instr) (ticks (get @configs :bars)))]
+            (let [mapping (map-row (get @beat (keyword instr)) (ticks (get @configs :bars)))]
               (into
                 ^{:key instr} [:tr]
                 (cons
@@ -140,45 +140,60 @@
      [step-control key #(< % end) #(+ % step) "+" controls event-key]]))
 
 (defn track-control-panel []
-  (let [instr-controls (re-frame/subscribe [:instr-controls])
-        controls (re-frame/subscribe [:controls])
+  (let [controls (re-frame/subscribe [:controls])
         editor (re-frame/subscribe [:editor])
         instruments (re-frame/subscribe [:instruments])]
     (fn []
       [:div
-       [:div.col-md-3
-        [step-select :duration 0.25 4.25 0.25 editor :change-editor-control]]
-       [:div.col-md-3
+       [:div.col-sm-3
         [select :panel ["track" "beat"] controls :change-control identity]]
-       [:div.col-md-3
+       [:div.col-sm-3
         [select :instr @instruments controls :change-control identity]]
-       [:div.col-md-3
-        [slider :cutoff 100 5000 50 instr-controls]]])))
+       [:div.col-sm-5
+        [step-select :duration 0.25 4.25 0.25 editor :change-editor-control]]])))
 
-(defn control-button [name event]
-  [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name])
+(defn play-stop-button []
+  (let [playing (re-frame/subscribe [:playing])]
+    (fn []
+      (let [[name event] (if @playing ["stop" :stop] ["play" :play])]
+        [:button.form-control.btn-small {:on-click #(re-frame/dispatch [event])} name]))))
 
 (defn play-control-panel []
   (fn []
     [:div.form-inline
-     [control-button "play" :play]
-     [control-button "stop" :stop]]))
+     [play-stop-button]]))
+
+(defonce key-listener (reagent.core/atom nil))
 
 (defn main-panel []
-  (let [controls (re-frame/subscribe [:controls])]
-    (fn []
-      [:div.main
-       [:div.row.panel
-        [:div.col-md-2
-         [:h2.logo "Disclo" [:em "j"] "ure UI"]]
-        [:div.col-md-1
-         [play-control-panel]]
-        [:div.col-md-6.form-inline
-         [track-control-panel]]]
-       [:div.row
-        [:div.col-md-11
-         (condp = (:panel @controls)
-           "track" [track-panel]
-           "beat" [beat-panel])]
-        [:div.col-md-3]]]
+  (let [controls (re-frame/subscribe [:controls])
+        playing (re-frame/subscribe [:playing])]
+    (reagent/create-class
+      {:component-did-mount
+       (fn []
+         (when (nil? @key-listener)
+           (let [handler (fn [e] (if (= 32 (.-keyCode e))
+                                   (re-frame/dispatch [(if @playing :stop :play)])))]
+             (js/addEventListener "keydown" handler)
+             (reset! key-listener handler))))
+       :component-will-unmount
+       (fn []
+         (js/removeEventListener "keydown" @key-listener)
+         (reset! key-listener nil))
+       :reagent-render
+       (fn []
+         [:div.main
+          [:div.row.panel
+           [:div.col-sm-2
+            [:h2.logo "Disclo" [:em "j"] "ure"]]
+           [:div.col-sm-1
+            [play-control-panel]]
+           [:div.col-sm-6.form-inline
+            [track-control-panel]]]
+          [:div.row
+           [:div.col-sm-11
+            (condp = (:panel @controls)
+              "track" [track-panel]
+              "beat" [beat-panel])]
+           [:div.col-md-3]]])}
       )))

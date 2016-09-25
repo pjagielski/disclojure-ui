@@ -1,4 +1,4 @@
-(ns overdaw-fe.runtime)
+(ns disclojure-ui.runtime)
 
 (defn find-instruments [ns]
   (->> (ns-interns ns)

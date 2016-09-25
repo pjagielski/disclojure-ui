@@ -1,7 +1,7 @@
-(ns overdaw-fe.main
+(ns disclojure-ui.main
   (:gen-class)
   (:require [com.stuartsierra.component :as component]
-            [overdaw-fe.system :refer [new-system]]))
+            [disclojure-ui.system :refer [new-system]]))
 
 (def config
   {:http {:port 3005}, :dev-mode? false})

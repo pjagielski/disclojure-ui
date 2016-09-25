@@ -1,14 +1,13 @@
-(ns overdaw-fe.api
+(ns disclojure-ui.api
   (:require [clojure.java.io :as io]
             [compojure.core :as c]
             [compojure.route :as route]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer [ok]]
             [disclojure.live :as dl :refer [assoc-track]]
-            [overdaw-fe.track :as t]
-            [overdaw-fe.model :as m]
-            [overdaw-fe.runtime :as r]
-            [overdaw-fe.play :as pl]
+            [disclojure-ui.model :as m]
+            [disclojure-ui.runtime :as r]
+            [disclojure.play :as pl]
             [overtone.live :as o]
             [leipzig.live :as live]
             [plumbing.core :as p]))
@@ -51,7 +50,7 @@
         (context "/instruments" []
           (GET "/" []
                 (->
-                  (symbol "overdaw-fe.inst")
+                  (symbol "disclojure-ui.inst")
                   (r/find-instruments)
                   (ok)))
           (POST "/play" []

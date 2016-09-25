@@ -1,12 +1,11 @@
-(ns overdaw-fe.websocket
-  (:require [clojure.core.async :as async :refer [go-loop <!]]
+(ns disclojure-ui.websocket
+  (:require [clojure.core.async :refer [go-loop <!]]
             [taoensso.timbre :as t]
             [com.stuartsierra.component :as component]))
 
 (defn get-broadcaster [sente]
   (fn [_ _ _ track]
     (doseq [uid (:any @(:connected-uids sente))]
-      (t/info "Sending update to" uid)
       ((:chsk-send! sente) uid [:disclojure/track track]))))
 
 (defrecord StateBroadcaster [state sente]
@@ -25,4 +24,4 @@
 
 (defn websocket-handler [{state :state}]
   (fn [{:keys [event] :as ev}]
-    (t/info "Received" event)))
+    (t/debug "Received" event)))

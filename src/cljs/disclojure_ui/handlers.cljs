@@ -1,11 +1,11 @@
-(ns overdaw-fe.handlers
+(ns disclojure-ui.handlers
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [re-frame.core :as re-frame]
             [plumbing.core :refer [map-vals map-keys]]
             [cljs.core.async :refer [<!]]
             [ajax.core :refer [GET POST PUT]]
-            [overdaw-fe.db :as db]
-            [overdaw-fe.config :as c :refer [res]]))
+            [disclojure-ui.db :as db]
+            [disclojure-ui.config :as c :refer [res]]))
 
 (re-frame/register-handler
   :initialize-db
@@ -24,36 +24,27 @@
           :handler #(re-frame/dispatch [:sync-track-response (js->clj %1)])})
     db))
 
+(defn normalize-names [notes]
+  (->> notes
+       (map (fn [{:keys [drum part] :as n}]
+              (if drum (assoc n :drum (keyword drum))
+                       (assoc n :part (name part)))))))
+
 (re-frame/register-handler
   :sync-track-response
   (fn [db [_ track]]
-    (let [result (->> track
-                      (map-keys name)
-                      (map-vals #(group-by :pitch %)))]
-      (println (get result "beat")))
     (->> track
          (map-keys name)
+         (map-vals normalize-names)
          (map-vals #(group-by :pitch %))
          (assoc db :track))))
-
-(defn keywords->names [notes]
-  (->> notes
-       (map (fn [{:keys [drum part] :as n}]
-              (as-> n $
-                    (when drum (assoc $ :drum (name drum)))
-                    (when part (assoc $ :part (name part))))))))
 
 (re-frame/register-handler
   :push-track
   (fn [db [_ track]]
-    (let [result (->> track
-                      (map-keys name)
-                      (map-vals keywords->names)
-                      (map-vals #(group-by :pitch %)))]
-      (println (get result "beat")))
     (->> track
          (map-keys name)
-         (map-vals keywords->names)
+         (map-vals normalize-names)
          (map-vals #(group-by :pitch %))
          (assoc db :track))))
 
@@ -100,13 +91,13 @@
   :play
   (fn [db _]
     (POST (str c/api-base "/track/play"))
-    db))
+    (assoc db :playing true)))
 
 (re-frame/register-handler
   :stop
   (fn [db _]
     (POST (str c/api-base "/track/stop"))
-    db))
+    (assoc db :playing false)))
 
 (re-frame/register-handler
   :change-control

@@ -1,4 +1,4 @@
-(ns overdaw-fe.websocket
+(ns disclojure-ui.websocket
   (:require-macros
     [cljs.core.async.macros :refer (go go-loop)])
   (:require
@@ -8,7 +8,6 @@
     [re-frame.core :as re-frame]))
 
 (defn event-handler [event]
-  (.log js/console "Event: %s" (pr-str event))
   (match [event]
          [[:chsk/handshake _]] (.log js/console "Sente handshake")
          [[:chsk/recv [:disclojure/track track]]] (re-frame/dispatch [:push-track track])
@@ -16,9 +15,9 @@
 
 (defn event-loop [ch-recv]
   (go-loop []
-           (let [{:as ev-msg :keys [event]} (<! ch-recv)]
-             (event-handler event)
-             (recur))))
+     (let [{:as ev-msg :keys [event]} (<! ch-recv)]
+       (event-handler event)
+       (recur))))
 
 (defn connect []
   (let [{:keys [chsk ch-recv send-fn state]}

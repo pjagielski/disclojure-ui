@@ -4,7 +4,9 @@ A [re-frame](https://github.com/Day8/re-frame) application designed to ... well,
 
 ## Demo
 
-[![disclojure-ui demo](https://img.youtube.com/vi/VfVIeu9MoCE/0.jpg)](https://www.youtube.com/watch?v=VfVIeu9MoCE)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=VfVIeu9MoCE
+" target="_blank"><img src="http://img.youtube.com/vi/VfVIeu9MoCE/0.jpg" 
+alt="disclojure-ui demo video" width="480" height="360"/></a>
 
 ### Run application:
 

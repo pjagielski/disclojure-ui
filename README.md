@@ -3,7 +3,7 @@
 A [re-frame](https://github.com/Day8/re-frame) application to visualize compositions created with [Disclojure](https://github.com/pjagielski/disclojure) and [Leipzig](https://github.com/ctford/leipzig)
 
 ## Beat editing
-<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats.gif" width="500px"/>
+<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats.gif" width="650px"/>
 
 ## Live-coding demo
 

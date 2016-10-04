@@ -6,7 +6,7 @@ A [re-frame](https://github.com/Day8/re-frame) application to visualize and edit
 [Disclojure](https://github.com/pjagielski/disclojure) is a live-coding environment for [Overtone](https://github.com/overtone/overtone) and [Leipzig](https://github.com/ctford/leipzig). 
 
 ## What is Leipzig?
-[Leipzig](https://github.com/ctford/leipzig) is a composition library for [Overtone](https://github.com/overtone/overtone) created by [Chris Ford](https://github.com/ctford). It provides a DSL which allows you to model melodies playable by Overtone with Clojure collections.
+[Leipzig](https://github.com/ctford/leipzig) is a composition library for [Overtone](https://github.com/overtone/overtone) created by [Chris Ford](https://github.com/ctford). It provides a DSL which allows you to model melodies playable by Overtone with convenient transformations of Clojure collections.
 
 An example Leipzig melody:
 ```clojure

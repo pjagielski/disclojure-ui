@@ -2,6 +2,9 @@
 
 A [re-frame](https://github.com/Day8/re-frame) application to visualize compositions created with [Disclojure](https://github.com/pjagielski/disclojure) and [Leipzig](https://github.com/ctford/leipzig)
 
+## Visualizing melodies
+<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/melody.gif" height="550px"/>
+
 ## Beat editing
 <img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats.gif" width="650px"/>
 

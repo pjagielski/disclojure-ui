@@ -3,7 +3,7 @@
 A [re-frame](https://github.com/Day8/re-frame) application to visualize and edit compositions created with [Leipzig](https://github.com/ctford/leipzig) for [Overtone](https://github.com/overtone/overtone).
 
 ## What is Overtone?
-[Overtone](https://github.com/overtone/overtone) is a suberb Clojure sound library created by [Sam Aaron](https://github.com/samaaron). It let's you design own synths, play samples, interact with MIDI devices through [SuperCollider](http://supercollider.github.io) platform. Overtone is realy good for sound design and *playing individual notes* but not that good at *modeling complex compositions*. That's some abstraction layer libraries over it like [Leipzig](https://github.com/ctford/leipzig) and [mud](https://github.com/josephwilk/mud) were created.
+[Overtone](https://github.com/overtone/overtone) is a suberb Clojure sound library created by [Sam Aaron](https://github.com/samaaron). It lets you design own synths, play samples, interact with MIDI devices through [SuperCollider](http://supercollider.github.io) platform. Overtone is realy good for sound design and *playing individual notes* but not that good at *modeling complex compositions*. That's why some abstraction layer libraries over it like [Leipzig](https://github.com/ctford/leipzig) and [mud](https://github.com/josephwilk/mud) were created.
 
 ## What is Leipzig?
 [Leipzig](https://github.com/ctford/leipzig) is a composition library for [Overtone](https://github.com/overtone/overtone) created by [Chris Ford](https://github.com/ctford). The main idea behind Leipzig is that you can model (most of) melodies by sequence of notes with durations:

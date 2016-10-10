@@ -2,8 +2,10 @@
 
 A [re-frame](https://github.com/Day8/re-frame) application to visualize and edit compositions created with [Leipzig](https://github.com/ctford/leipzig) for [Overtone](https://github.com/overtone/overtone).
 
+![disclojure](https://github.com/pjagielski/disclojure-ui/raw/readme/resources/disclojure.png)
+
 ## What is Overtone?
-[Overtone](https://github.com/overtone/overtone) is a suberb Clojure sound library created by [Sam Aaron](https://github.com/samaaron). It lets you design own synths, play samples, interact with MIDI devices through [SuperCollider](http://supercollider.github.io) platform. Overtone is realy good for sound design and *playing individual notes* but not that good at *modeling complex compositions*. That's why some abstraction layer libraries over it like [Leipzig](https://github.com/ctford/leipzig) and [mud](https://github.com/josephwilk/mud) were created.
+[Overtone](https://github.com/overtone/overtone) is a suberb Clojure sound library created by [Sa0m Aaron](https://github.com/samaaron). It lets you design own synths, play samples, interact with MIDI devices through [SuperCollider](http://supercollider.github.io) platform. Overtone is realy good for sound design and *playing individual notes* but not that good at *modeling complex compositions*. That's why some abstraction layer libraries over it like [Leipzig](https://github.com/ctford/leipzig) and [mud](https://github.com/josephwilk/mud) were created.
 
 ## What is Leipzig?
 [Leipzig](https://github.com/ctford/leipzig) is a composition library for [Overtone](https://github.com/overtone/overtone) created by [Chris Ford](https://github.com/ctford). The main idea behind Leipzig is that you can model (most of) melodies by sequence of notes with durations:
@@ -11,13 +13,17 @@ A [re-frame](https://github.com/Day8/re-frame) application to visualize and edit
 {:time 0 :pitch 67 :duration 1/4 :part :bass}
 ```
 
-Leipzig provides a DSL which allows you to model these melodies with convenient transformations of Clojure collections:
+Leipzig provides a DSL which allows you to model these melodies with convenient transformations of Clojure collections.
+
+Consider classic Da Funk track by Daft Punk:
 ```clojure
-              ; Row, row, row  your boat,
-  (->> (phrase [3/3  3/3  2/3  1/3  3/3]
-               [  0    0    0    1    2])
-       (all :part :leader)
-       (where :pitch (comp scale/C scale/major)))
+(->> (phrase (concat [2]
+                     (take 12 (cycle [1/2 1/2 1/2 2.5]))
+                     [1 1])
+             [0 -1 0 2 -3 -4 -3 -1 -5 -6 -5 -3 -7 -6 -5])
+     (where :pitch (comp scale/G scale/minor))
+     (all :part :supersaw)
+     (all :amp 1))
 ```
 
 The `phrase` function takes 2 collections: one with note durations and one with pitches. 

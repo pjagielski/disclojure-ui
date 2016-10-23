@@ -37,7 +37,7 @@ The `phrase` function takes 2 collections - with note durations and pitches - wh
 ## How can Disclojure-UI help working with Leipzig melodies?
 As a non-musician it was hard for me to understand the context of the notes without actually seeing them on the screen. So I built Disclojure-UI as a browser-based DAW with a piano-roll like view that visualizes melodies created with Leipzig. The data is synced in both directions - when you change the Leipzig structure in the REPL (via websockert) and when you just edit the notes by clicking in the web GUI (via REST api):
 
-<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/melody.gif" height="550px"/>
+<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/melody2.gif" height="550px"/>
 
 <img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats.gif" width="650px"/>
 

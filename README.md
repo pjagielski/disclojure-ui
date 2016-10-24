@@ -39,7 +39,9 @@ As a non-musician it was hard for me to understand the context of the notes with
 
 <img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/melody2.gif" height="550px"/>
 
-<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats.gif" width="650px"/>
+Apart from editing melodies, Disclojure-UI helps you edit beats in a separate `beat` view:
+
+<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats2.gif" width="500px"/>
 
 ### Running
 

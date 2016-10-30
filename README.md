@@ -43,7 +43,14 @@ Apart from editing melodies, Disclojure-UI helps you edit beats in a separate `b
 
 <img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/beats2.gif" width="500px"/>
 
-### Running
+## How it works?
+Frontend is built with [re-frame](https://github.com/Day8/re-frame) and [sente](https://github.com/ptaoussanis/sente) for websockets. 
+Backend manages state with [component](https://github.com/stuartsierra/component) and uses [system](https://github.com/danielsz/system) and [compojure-api](https://github.com/metosin/compojure-api) to expose REST API, also visible as Swagger spec:
+
+<img src="https://github.com/pjagielski/disclojure-ui/raw/readme/resources/api.png" width="500px"/>
+
+
+## Running
 
 ```clojure
 lein repl

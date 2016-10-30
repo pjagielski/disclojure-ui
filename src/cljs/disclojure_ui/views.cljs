@@ -9,8 +9,8 @@
             [reagent.core :as reagent]))
 
 (defn map-note [[idx result] {:keys [time duration amp]}]
-  (let [time-idx (/ time res)
-        new-idx (+ time-idx (/ duration res))]
+  (let [time-idx (int (/ time res))
+        new-idx (+ time-idx (int (/ duration res)))]
     [new-idx (conj result [idx time-idx false amp] [time-idx new-idx true amp])]))
 
 (defn map-row [times ticks]
@@ -24,15 +24,18 @@
     0.5 "a5"
     "a7"))
 
-(defn sep? [x] (= 0 (mod x 8)))
+(defn res->ticks [res]
+  (int (/ 2 res)))
+
+(defn sep? [x] (= 0 (mod x (res->ticks res))))
 
 (defn would-have-note [note time cursor-pos duration]
     (and (= note (:note @cursor-pos))
          (<= (:time @cursor-pos) time)
-         (< time (+ (:time @cursor-pos) (/ duration res)))))
+         (< time (+ (:time @cursor-pos) (int (/ duration res))))))
 
-(defn ticks [bars]
-  (* 8 bars))
+(defn ticks [bars res]
+  (* (res->ticks res) bars))
 
 (defn track-row [instr y bars duration]
   (let [part (re-frame/subscribe [:track-part instr y])
@@ -43,7 +46,7 @@
        (fn [_ _ _] false)
        :reagent-render
        (fn [instr y bars duration]
-         (let [mapping (map-row @part (ticks bars))
+         (let [mapping (map-row @part (ticks bars res))
                note (get @note-names (str y))]
            (into
              ^{:key y} [:tr]
@@ -67,7 +70,6 @@
         controls (re-frame/subscribe [:controls])
         editor (re-frame/subscribe [:editor])]
     (fn []
-      (println @editor @controls)
       (time
         [:div.track-container
          (let [{:keys [from to bars]} @configs
@@ -88,7 +90,7 @@
        [:table.seq
         (into ^{:key "beat-tbody"} [:tbody]
           (for [instr (keys @kit)]
-            (let [mapping (map-row (get @beat (keyword instr)) (ticks (get @configs :bars)))]
+            (let [mapping (map-row (get @beat (keyword instr)) (ticks (get @configs :bars) res))]
               (into
                 ^{:key instr} [:tr]
                 (cons

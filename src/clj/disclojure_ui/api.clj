@@ -32,56 +32,59 @@
     (route/resources "/")
     (c/GET "/" []
       (io/resource "public/index.html"))
-    (context "/api" []
-      (api
-        {:swagger    {:ui "/swagget" :spec "/swagger.json"}}
+    (api
+      {:swagger {:ui "/api-docs" :spec "/swagger.json"
+                 :data {:info {:version "1.0.0"
+                               :title "Disclojure-UI API"
+                               :description "Interact with Overtone via REST"}}}}
+      (context "/api" []
         (context "/track" []
           (GET "/" [] (ok @raw-track))
           (POST "/play" [] (live/jam (dl/track)) (ok))
           (POST "/stop" [] (live/stop) (ok))
           (PUT "/" []
-                :body [body m/TrackMutation]
-                (let [part (keyword (:part body))]
-                  (as->
-                    (get @raw-track part) $
-                    (mutate-track! $ body part (m/add? body))
-                    (assoc-track part $)))
-                (ok)))
+            :body [body m/TrackMutation]
+            (let [part (keyword (:part body))]
+              (as->
+                (get @raw-track part) $
+                (mutate-track! $ body part (m/add? body))
+                (assoc-track part $)))
+            (ok)))
         (context "/instruments" []
           (GET "/" []
-                (->
-                  (symbol "disclojure.inst")
-                  (r/find-instruments)
-                  (ok)))
+            (->
+              (symbol "disclojure.inst")
+              (r/find-instruments)
+              (ok)))
           (POST "/play" []
-                 :body [body m/PlayNote]
-                 (pl/play (keyword (:instr body)) body)
-                 (ok)))
+            :body [body m/PlayNote]
+            (pl/play (keyword (:instr body)) body)
+            (ok)))
         (GET "/notes/:from/:to" []
-              :path-params [from :- Long, to :- Long]
-              (->> (range from to)
-                   (map (fn [x] {x (o/find-note-name x)}))
-                   (into {})
-                   ok))
+          :path-params [from :- Long, to :- Long]
+          (->> (range from to)
+               (map (fn [x] {x (o/find-note-name x)}))
+               (into {})
+               ok))
         (context "/kit" []
           (GET "/" []
             (ok (p/map-vals #(select-keys % [:amp]) @kit)))
           (POST "/play" []
-                 :body [body m/PlayBeat]
-                 (apply (-> (get @kit (keyword (:drum body))) :sound) [])
-                 (ok)))
+            :body [body m/PlayBeat]
+            (apply (-> (get @kit (keyword (:drum body))) :sound) [])
+            (ok)))
         (context "/beat" []
           (PUT "/" []
-                :body [body m/BeatMutation]
-                (as->
-                  (get @raw-track :beat) $
-                  (mutate-beat! $ body (keyword (:drum body)) (m/add? body))
-                  (assoc-track :beat $))
-                (ok)))
+            :body [body m/BeatMutation]
+            (as->
+              (get @raw-track :beat) $
+              (mutate-beat! $ body (keyword (:drum body)) (m/add? body))
+              (assoc-track :beat $))
+            (ok)))
         (context "/controls" []
           (PUT "/" []
-                :body [body m/ControlChange]
-                (let [instr (keyword (:instr body))
-                      control (keyword (:control body))]
-                  (swap! controls assoc-in [instr control] (:value body)))
-                (ok)))))))
+            :body [body m/ControlChange]
+            (let [instr (keyword (:instr body))
+                  control (keyword (:control body))]
+              (swap! controls assoc-in [instr control] (:value body)))
+            (ok)))))))

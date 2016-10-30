@@ -10,7 +10,7 @@
                  [com.stuartsierra/component "0.3.0"]
                  [org.danielsz/system "0.3.0"]
 
-                 [pjagielski/disclojure "0.1.3"]
+                 [pjagielski/disclojure "0.1.4"]
                  [compojure "1.4.0"]
                  [metosin/compojure-api "1.1.4"]
 

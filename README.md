@@ -52,17 +52,38 @@ Backend manages state with [component](https://github.com/stuartsierra/component
 
 ## Running
 
+Compile Clojurescript:
+```clojure
+lein cljsbuild once dev
+```
+
+Run:
 ```clojure
 lein repl
 (require 'repl)
 (reloaded.repl/reset)
 ```
+Browse to [http://localhost:3005](http://localhost:3005).
 
-In another terminal:
-```
-lein figwheel
+Interact (better with some IDE like Cursive, vim-clojure, Emacs):
+```clojure
+(require '[leipzig.melody :refer :all])
+(require '[leipzig.scale :as scale])
+(require '[leipzig.live :as live])
+(require '[disclojure.live :as l])
+(->> (phrase (concat [2]
+                     (take 12 (cycle [1/2 1/2 1/2 2.5]))
+                     [1 1])
+             [7 6 7 9 4 3 4 6 2 1 2 4 0 1 2])
+     (where :pitch (comp scale/G scale/minor))
+     (all :part :supersaw)
+     (all :amp 1)
+     (l/assoc-track :supersaw))
+(live/jam (l/track))
+...
+(live/stop)
 ```
 
-Wait a bit, then browse to [http://localhost:3005](http://localhost:3449).
+More info about live coding in [disclojure]() docs.
 
 You can see example session in this **live-coding demo**: [![disclojure ui demo](http://img.youtube.com/vi/K98oZPca3Fw/0.jpg)](http://www.youtube.com/watch?v=K98oZPca3Fw)

@@ -84,6 +84,6 @@ Interact (better with some IDE like Cursive, vim-clojure, Emacs):
 (live/stop)
 ```
 
-More info about live coding in [disclojure]() docs.
+More info about live coding in [disclojure](https://github.com/pjagielski/disclojure) docs.
 
 You can see example session in this **live-coding demo**: [![disclojure ui demo](http://img.youtube.com/vi/K98oZPca3Fw/0.jpg)](http://www.youtube.com/watch?v=K98oZPca3Fw)

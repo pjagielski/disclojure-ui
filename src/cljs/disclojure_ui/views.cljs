@@ -39,11 +39,12 @@
 
 (defn is-black-key? [note-name]
   (let [chars (set note-name)]
-    (or (contains? chars \#)
-        (contains? chars \b))))
+    (and (string? note-name)
+         (or (contains? chars \#)
+             (contains? chars \b)))))
 
 (defn is-C? [note-name]
-  (re-matches #"C\d" note-name))
+  (and (string? note-name) (re-matches #"C\d" note-name)))
 
 (defn track-row [instr y bars duration]
   (let [part (re-frame/subscribe [:track-part instr y])

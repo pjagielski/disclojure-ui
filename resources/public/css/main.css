@@ -31,7 +31,7 @@ table.seq td.x {
 }
 
 table.seq td.p {
-    background-color: greenyellow;
+    background-color: #ADFF2F;
 }
 
 table.seq td.x.a7 {
@@ -48,6 +48,14 @@ table.seq td.x.a3 {
 
 table.seq td.t {
     border-left: 2px solid #000000;
+}
+
+table.seq td.c {
+    border-bottom: 2px solid #000000;
+}
+
+td.b {
+    background-color: #d8d8d8;
 }
 
 .play-controls {

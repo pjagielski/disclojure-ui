@@ -37,6 +37,14 @@
 (defn ticks [bars res]
   (* (res->ticks res) bars))
 
+(defn is-black-key? [note-name]
+  (let [chars (set note-name)]
+    (or (contains? chars \#)
+        (contains? chars \b))))
+
+(defn is-C? [note-name]
+  (re-matches #"C\d" note-name))
+
 (defn track-row [instr y bars duration]
   (let [part (re-frame/subscribe [:track-part instr y])
         note-names (re-frame/subscribe [:notes])
@@ -57,7 +65,9 @@
                  (doall
                    (for [t (range from to)]
                      ^{:key (str t y)}
-                     [:td {:class          (s/join " " [(when has-note? "x") (amp->class amp)
+                     [:td {:class          (s/join " " [(when (is-black-key? note) "b")
+                                                        (when (is-C? note) "c")
+                                                        (when has-note? "x") (amp->class amp)
                                                         (when (would-have-note y t cursor-pos duration) "p")
                                                         (when (sep? t) "t")])
                            :on-click       #(re-frame/dispatch [:edit-track [instr t y has-note?]])
